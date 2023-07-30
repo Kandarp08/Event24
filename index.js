@@ -1,6 +1,12 @@
 const express = require("express");
 const app = express();
 
+var cookieParser = require("cookie-parser");
+var session = require("express-session");
+
+app.use(cookieParser());
+app.use(session({secret: "Key"}));
+
 const bodyParser = require("body-parser");
 const multer = require("multer");
 const upload = multer();
@@ -28,36 +34,40 @@ const client = new MongoClient(uri,
     }
 });
 
-var data = {};
-var events = {};
-
-app.get("/event24", function(req, res)
+async function fetchData(res, file, params)
 {
-    async function fetchData()
+    try
     {
-        try
-        {
-            await client.connect();
-            
-            var dbo = client.db("institute_data");
-            var institutes = await dbo.collection("institutes").find({}).toArray();
+        await client.connect();
+        
+        var dbo = client.db("institute_data");
+        var institutes = await dbo.collection("institutes").find({}).toArray();
 
-            for (var institute of institutes)
-            {
-                data[institute.name] = institute.categories;
-                events[institute.name] = institute.events;
-            }
-        }
+        var data = {};
+        var events = {};
 
-        finally
+        for (var institute of institutes)
         {
-            await client.close();
-            res.render("index.ejs");
+            data[institute.name] = institute.categories;
+            events[institute.name] = institute.events;
         }
     }
 
-    if (Object.keys(events).length == 0)
-        fetchData().catch(console.dir);
+    finally
+    {
+        await client.close();
+
+        res.cookie("data", data, {maxAge: 1800000});
+        res.cookie("events", events, {maxAge: 1800000});
+
+        res.render(file, params);
+    }
+}
+
+app.get("/event24", function(req, res)
+{
+    if (!("events" in req.cookies))
+        fetchData(res, "index.ejs", null);
 
     else
         res.render("index.ejs");
@@ -65,7 +75,11 @@ app.get("/event24", function(req, res)
 
 app.get("/login", function(req, res)
 {
-    res.render("login_page.ejs", {msg: ""});
+    if (!("events" in req.cookies))
+        fetchData(res, "login_page.ejs", {msg: ""}).catch(console.dir);
+
+    else
+        res.render("login_page.ejs", {msg: ""});
 });
 
 app.post("/login", function(req, res)
@@ -90,7 +104,9 @@ app.post("/login", function(req, res)
             else
             {
                 await client.close();
-                res.redirect("http://localhost:8080/events/username=" + req.body.username);
+
+                res.cookie("username", req.body.username, {maxAge: 1800000});
+                res.redirect("http://localhost:8080/events");
             } 
         }
 
@@ -105,7 +121,11 @@ app.post("/login", function(req, res)
 
 app.get("/register", function(req, res)
 {
-    res.render("registration_page.ejs", {msg: "", data: data});
+    if (!("events" in req.cookies))
+        fetchData(res, "registration_page.ejs", {msg: "", data: req.cookies.data}).catch(console.dir);
+
+    else
+        res.render("registration_page.ejs", {msg: "", data: req.cookies.data});
 });
 
 app.post("/register", function(req, res)
@@ -125,12 +145,12 @@ app.post("/register", function(req, res)
 
             if (cursorName != null)
             {
-                res.render("registration_page.ejs", {msg: "This username already exists. Please select another username.", data: data});
+                res.render("registration_page.ejs", {msg: "This username already exists. Please select another username.", data: req.cookies.data});
             }
 
             else if (cursorMail != null)
             {
-                res.render("registration_page.ejs", {msg: "This email is already registered. Please use another email id.", data: data});
+                res.render("registration_page.ejs", {msg: "This email is already registered. Please use another email id.", data: req.cookies.data});
             }
 
             else
@@ -178,9 +198,21 @@ app.post("/register", function(req, res)
     confirmDetails();
 });
 
-app.get("/events/username=:username", function(req, res)
+app.get("/logout", function(req, res)
 {
-    var username = req.params.username;
+    res.clearCookie("username");
+    res.clearCookie("data");
+    res.clearCookie("events");
+    res.redirect("http://localhost:8080/event24");
+}); 
+
+app.get("/events", function(req, res)
+{
+    if (req.cookies.username === undefined)
+    {
+        res.redirect("http://localhost:8080/login");
+    }
+
     var user_doc;
 
     async function fetchEvents()
@@ -190,7 +222,7 @@ app.get("/events/username=:username", function(req, res)
             await client.connect();
 
             var dbo = client.db("userdata");
-            user_doc = await dbo.collection("users").findOne({username: username});
+            user_doc = await dbo.collection("users").findOne({username: req.cookies.username});
         }
 
         finally
@@ -198,14 +230,20 @@ app.get("/events/username=:username", function(req, res)
             await client.close();
 
             if ("institute" in user_doc)
-                res.render("events.ejs", {events: events[user_doc.institute]});
+                res.render("events.ejs", {data: req.cookies.data[user_doc.institute], events: req.cookies.events[user_doc.institute], user: user_doc});
 
             else
-                res.render("events.ejs", {events: events[user_doc.admin]});
+                res.render("events.ejs", {data: req.cookies.data[user_doc.admin], events: req.cookies.events[user_doc.admin], user: user_doc});
         }
     }
 
-    fetchEvents().catch(console.dir);
+    if (req.cookies.username !== undefined)
+        fetchEvents().catch(console.dir);
+});
+
+app.post("/events", function(req, res)
+{
+
 });
 
 app.listen(8080);
