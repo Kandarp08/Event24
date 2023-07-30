@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Register</title>
+
+        <link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">    
+        <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+        <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>    
+
+        <style>
+
+            #username, #password, #email
+            {
+                border-radius: 20px;
+            }
+
+        </style>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>                        
+            </button>
+    
+            <a class="navbar-brand" href="#">Event24</a>
+        </div>
+    
+        <div class="collapse navbar-collapse" id="navbar">
+    
+            <ul class="nav navbar-nav">
+                <li><a href="http://localhost:8080/event24">Home</a></li>
+            </ul>
+    
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="http://localhost:8080/register"><span class="glyphicon glyphicon-user"></span> Register</a></li>
+                <li><a href="http://localhost:8080/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+    
+<br>
+
+<p style="text-align: center;"><%= msg %></p>
+
+<div style="width: 50%; margin: auto; padding: 10px; outline: 2px solid black;">
+
+<br>
+
+<form class="form-horizontal" action = "/register" method = "post">
+    <fieldset>
+
+    <div class="form-group">
+        <label class="col-md-4 control-label">Username</label>  
+        <div class="col-md-4">
+        <input id="username" name="username" type="text" class="form-control input-md" required>
+        </div>
+    </div>
+        
+    <div class="form-group">
+        <label class="col-md-4 control-label">Password</label>
+        <div class="col-md-4">
+        <input id="password" name="password" type="text" class="form-control input-md" required>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-md-4 control-label">Email Address</label>
+        <div class="col-md-4">
+        <input id="email" name="email" type="email" class="form-control input-md" required>
+        </div>
+    </div>
+
+    <div style="width: 50%; margin: auto;">
+
+    <label for="college">Choose your institute</label>
+
+    <select name="institute" id="institute" onchange="updateList();"></select>
+
+    <br><br>
+
+    You will receive mails for the following events : <br><br>
+
+    <div id="options" class="form-check" style="height: 200px;"></div>
+
+    </div>
+
+    <br>
+
+    <div class="form-group">
+    <label class="col-md-4 control-label"></label>
+    <div class="col-md-4">
+        <center><button id="submit" name="submit" class="btn btn-primary btn-lg">Register</button></center>
+    </div>
+    </div>
+
+    </fieldset>
+</form>
+
+<p style="text-align: center;">Already have an account? Click <a href="http://localhost:8080/login">here</a> to login.</p>
+
+</div>
+
+<script>
+
+var data = <%-JSON.stringify(data)%>;
+var instituteNames = document.getElementById("institute");
+
+showInstitutes();
+updateList();
+
+function showInstitutes()
+{
+    instituteNames.innertHTML = "";
+
+    for (let institute in data)
+    {
+        instituteNames.innerHTML += "<option value='" + institute + "'>" + institute + "</option>";
+    }
+}
+
+function updateList()
+{
+    var selected_institute = document.getElementById("institute").value;
+    var options = document.getElementById("options");
+    
+    options.innerHTML = "";
+
+    if (data[selected_institute].length > 5)
+    {
+        options.style.overflowY = "scroll";
+    }
+
+    else
+    {
+        options.style.overflowY = "";
+    }
+
+    for (let i = 0; i < data[selected_institute].length; ++i)
+    {
+        options.innerHTML += " <input class='form-check-input' type='checkbox' id='check" + i + "' name='category' value='" + data[selected_institute][i] + "'><label class='form-check-label' for='check" +
+            i + "'>" + data[selected_institute][i] + "</label> <br>";
+    }
+}
+
+</script>
+
+</body>
+
+</html>

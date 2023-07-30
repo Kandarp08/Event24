@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    
+    <link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">    
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>    
+
+    <style>
+
+        #username, #password
+        {
+            border-radius: 20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+    
+<div class="bg"></div>
+
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>                        
+            </button>
+
+            <a class="navbar-brand" href="#">Event24</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="navbar">
+
+            <ul class="nav navbar-nav">
+                <li><a href="http://localhost:8080/event24">Home</a></li>
+            </ul>
+
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="http://localhost:8080/register"><span class="glyphicon glyphicon-user"></span> Register</a></li>
+                <li><a href="http://localhost:8080/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<p style="text-align: center;"><%= msg %></p>
+
+<br>
+
+<div style="width: 50%; margin: auto; padding: 10px; outline: 2px solid black;">
+
+<br>
+
+<form class="form-horizontal" action="/login" method = "post">
+    <fieldset>
+
+    <div class="form-group">
+    <label class="col-md-4 control-label">Username</label>  
+    <div class="col-md-4">
+    <input id="username" name="username" type="text" class="form-control input-md" autocomplete = "off">
+        
+    </div>
+    </div>
+
+    <div class="form-group">
+    <label class="col-md-4 control-label" >Password</label>
+    <div class="col-md-4">
+        <input id="password" name="password" type="password" class="form-control input-md">
+        
+    </div>
+    </div>
+
+    <div class="form-group">
+    <label class="col-md-4 control-label"></label>
+    <div class="col-md-4">
+        <center><button id="submit" name="submit" class="btn btn-primary">Login</button></center>
+    </div>
+    </div>
+
+    </fieldset>
+</form>
+
+<center>Don't have an account? Click <a href="http://localhost:8080/register">here</a> to register.</center>
+
+</div>
+
+</body>
+
+</html>
