@@ -121,9 +121,9 @@
                         </div>
                     </div>
 
-                    Select organizing club : 
+                    <center>Select organizing club : 
 
-                    <select name="club" id="club">
+                    <select name="club" id="club" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur(); displayButtons();">
 
                         <% data.forEach(club => { %>
 
@@ -132,8 +132,33 @@
                         <% }); %>
 
                     </select>
+                    </center>
 
+                    <br>
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">Event Venue</label>  
+                        <div class="col-md-4">
+                        <input id="venue" name="venue" type="text" class="form-control input-md" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-md-4 control-label">Event Time</label>  
+                        <div class="col-md-4">
+                        <input id="time" name="time" type="datetime-local" class="form-control input-md" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="width: 50%; margin: auto;">
+                        <label for="description">Event Description</label>
+                        <textarea class="form-control" rows="5" id="description" name="description" required></textarea>
+                      </div>
+
+                    <br>
+                    <button type="submit" class="btn btn-success" id="arrange" style="float:right">Request Permission</button>
                     </fieldset>
+
                 </form>
 
             </div>
@@ -144,6 +169,26 @@
         </div>
     </div>
 </div>
+
+<script>
+
+var user = <%- JSON.stringify(user) %>;
+var permissions = user.permissions;
+
+displayButtons();
+
+function displayButtons()
+{
+    var club = document.getElementById("club").value;
+
+    if (("admin" in user) || permissions.includes(club))
+        document.getElementById("arrange").innerHTML = "Arrange Event";
+
+    else
+        document.getElementById("arrange").innerHTML = "Request Permission";
+}
+
+</script>
 
 </body>
 
