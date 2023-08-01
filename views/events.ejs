@@ -68,6 +68,10 @@
 
 <% for (let i = 0; i < events.length; ++i) { %>
 
+    <% if (events[i].accepted === false) { %>
+        <% continue; %>
+    <% } %>    
+
     <div class="event" data-toggle="modal" data-target="#eventInfo<%=i%>"></div>
 
     <div class="modal fade" id="eventInfo<%=i%>">

@@ -105,7 +105,7 @@ app.post("/login", function(req, res)
             {
                 await client.close();
 
-                res.cookie("username", req.body.username, {maxAge: 1800000});
+                res.cookie("user", result, {maxAge: 1800000});
                 res.redirect("http://localhost:8080/events");
             } 
         }
@@ -145,12 +145,12 @@ app.post("/register", function(req, res)
 
             if (cursorName != null)
             {
-                res.render("registration_page.ejs", {msg: "This username already exists. Please select another username.", data: req.cookies.data});
+                res.render("registration_page.ejs", {msg: "This username already exists. Please select another username.", data: data});
             }
 
             else if (cursorMail != null)
             {
-                res.render("registration_page.ejs", {msg: "This email is already registered. Please use another email id.", data: req.cookies.data});
+                res.render("registration_page.ejs", {msg: "This email is already registered. Please use another email id.", data: data});
             }
 
             else
@@ -178,6 +178,7 @@ app.post("/register", function(req, res)
                 password: req.body.password,
                 email: req.body.email,
                 institute: req.body.institute,
+                remind: req.body.remind,
                 interests: [],
                 permissions: [],
             }
@@ -200,100 +201,103 @@ app.post("/register", function(req, res)
 
 app.get("/logout", function(req, res)
 {
-    res.clearCookie("username");
+    res.clearCookie("user");
     res.redirect("http://localhost:8080/event24");
 }); 
 
+function showEvents(req, res)
+{    
+    if ("institute" in req.cookies.user)
+        res.render("events.ejs", {data: data[req.cookies.user.institute], events: events[req.cookies.user.institute], user: req.cookies.user});
+
+    else
+        res.render("events.ejs", {data: data[req.cookies.user.admin], events: events[req.cookies.user.admin], user: req.cookies.user});
+}
+
 app.get("/events", function(req, res)
 {
-    var user_doc;
-
-    if (req.cookies.username === undefined || Object.keys(events).length === 0)
-    {
+    if (req.cookies.user === undefined || Object.keys(events).length === 0)
         res.redirect("http://localhost:8080/login");
-    }
 
-    else if (!(req.cookies.username === undefined))
-        fetchEvents().catch(console.dir);
-
-    async function fetchEvents()
-    {
-        try
-        {
-            await client.connect();
-
-            var dbo = client.db("userdata");
-            user_doc = await dbo.collection("users").findOne({username: req.cookies.username});
-
-            res.cookie("user", user_doc, {maxAge: 1800000});
-        }
-
-        finally
-        {
-            await client.close();
-
-            if ("institute" in user_doc)
-                res.render("events.ejs", {data: data[user_doc.institute], events: events[user_doc.institute], user: user_doc});
-
-            else
-                res.render("events.ejs", {data: data[user_doc.admin], events: events[user_doc.admin], user: user_doc});
-        }
-    }
+    else
+        showEvents(req, res);
 });
 
 app.post("/events", function(req, res)
 {
     var new_event;
-    var curr_events;
 
-    async function updateEvents(institute_name)
+    new_event =
+    {
+        name: req.body.name,
+        club: req.body.club,
+        venue: req.body.venue,
+        time: req.body.time,
+        description: req.body.description,
+        accepted: false,
+        permissions: [{username: req.cookies.user.username, type: "organise_request"}],
+    };
+
+    if (!("admin" in req.cookies.user) && req.cookies.user.permissions.includes(new_event.club))
+    {
+        new_event.accepted = true;
+        new_event.permissions = [{username: req.cookies.user.username, type: "allowed"}];
+
+        updateEventsDatabase(req.cookies.user.institute, new_event, events[req.cookies.user.institute], req, res, true);
+    }
+
+    else if ("admin" in user)
+    {
+        new_event.accepted = true;
+        new_event.permissions = [];
+
+        updateEventsDatabase(req.cookies.user.admin, new_event, events[req.cookies.useradmin], req, res, true);
+    }
+
+    else
+    {
+        updateEventsDatabase(req.cookies.user.institute, new_event, events[req.cookies.user.institute], req, res, false);
+    }
+
+    async function updateEventsDatabase(institute_name, new_event, curr_events, req, res, mailUsers)
     {
         try
-        {   
+        {
+            curr_events.push(new_event);
+
             await client.connect();
 
             var dbo = client.db("institute_data");
-            
             await dbo.collection("institutes").updateOne({name: institute_name}, {$set: {events: curr_events}});
         }
 
         finally
         {
             await client.close();
-            announceEvent();
+
+            if (mailUsers)
+                await mailInterestedUsers(new_event, institute_name);
+
+            showEvents(req, res);
         }
     }
 
-    async function informUser(mailOptions, transporter, user)
-    {
-        mailOptions.to = user.email;
-                    
-        await transporter.sendMail(mailOptions, function(err, info)
-        {
-            if (err)
-                console.log(err);
-
-            else
-                console.log("Email sent successfully to " + user.email);
-        });
-    }
-
-    async function announceEvent()
+    async function mailInterestedUsers(new_event, institute_name)
     {
         const transporter = nodemailer.createTransport
         ({
-            host: admin_data[req.cookies.user.institute].host,
+            host: admin_data[institute_name].host,
 
             auth:
             {
-                user: admin_data[req.cookies.user.institute].user,
-                pass: admin_data[req.cookies.user.institute].pass
+                user: admin_data[institute_name].user,
+                pass: admin_data[institute_name].pass
             }
         });
 
         const mailOptions =
         {
-            from: admin_data[req.cookies.user.institute].user,
+            from: admin_data[institute_name].user,
         
             subject: new_event.name,
             text: new_event.description
@@ -304,13 +308,29 @@ app.post("/events", function(req, res)
             await client.connect();
 
             var dbo = client.db("userdata");
+
             var interested_users = await dbo.collection("users").find({}).toArray();
 
             for (var user of interested_users)
             {
-                if (("admin" in user) || user.interests.includes(new_event.club))
+                mailOptions.to = user.email;
+
+                if (("admin" in user) && user.admin == institute_name)
                 {
-                    informUser(mailOptions, transporter, user);
+                    transporter.sendMail(mailOptions, function (err, info) 
+                    {
+                        if (err)
+                            console.log(err);
+                    });
+                }
+
+                else if (user.institute == institute_name && user.interests.includes(new_event.club))
+                {
+                    transporter.sendMail(mailOptions, function(err, info)
+                    {
+                        if (err)
+                            console.log(err);
+                    });
                 }
             }
         }
@@ -318,40 +338,7 @@ app.post("/events", function(req, res)
         finally
         {
             await client.close();
-
-            if ("institute" in req.cookies.user)
-                res.render("events.ejs", {data: data[req.cookies.user.institute], events: events[req.cookies.user.institute], user: req.cookies.user});
-
-            else
-                res.render("events.ejs", {data: data[req.cookies.user.admin], events: events[req.cookies.user.admin], user: req.cookies.user});
         }
-    }
-
-    new_event =
-    {
-        name: req.body.name,
-        club: req.body.club,
-        venue: req.body.venue,
-        time: req.body.time,
-        description: req.body.description,
-        status: "requested",
-        organizer: req.cookies.user.username,
-    };
-
-    if (("admin" in req.cookies.user) || req.cookies.user.permissions.includes(req.body.club))
-    {
-        new_event.status = "accepted";
-        curr_events = events[req.cookies.user.institute];
-
-        curr_events.push(new_event);
-        events[req.cookies.user.institute] = curr_events;
-
-        updateEvents(req.cookies.user.institute, curr_events, new_event).catch(console.dir);
-    }
-
-    else
-    {
-        // Mark event as requested
     }
 });
 
