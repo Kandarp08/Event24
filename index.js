@@ -208,10 +208,19 @@ app.get("/logout", function(req, res)
 function showEvents(req, res)
 {    
     if ("institute" in req.cookies.user)
+    {
         res.render("events.ejs", {data: data[req.cookies.user.institute], events: events[req.cookies.user.institute], user: req.cookies.user});
+    }
 
     else
-        res.render("events.ejs", {data: data[req.cookies.user.admin], events: events[req.cookies.user.admin], user: req.cookies.user});
+    {
+        var req_count = events[req.cookies.user.admin].filter(function(event)
+        {
+            return event.accepted === false;
+        }).length;
+
+        res.render("events.ejs", {data: data[req.cookies.user.admin], events: events[req.cookies.user.admin], user: req.cookies.user, req_count: req_count});
+    }
 }
 
 app.get("/events", function(req, res)
@@ -235,7 +244,7 @@ app.post("/events", function(req, res)
         time: req.body.time,
         description: req.body.description,
         accepted: false,
-        permissions: [{username: req.cookies.user.username, type: "organise_request"}],
+        permissions: [{username: req.cookies.user.username, type: "organise"}],
     };
 
     if (!("admin" in req.cookies.user) && req.cookies.user.permissions.includes(new_event.club))
@@ -246,12 +255,12 @@ app.post("/events", function(req, res)
         updateEventsDatabase(req.cookies.user.institute, new_event, events[req.cookies.user.institute], req, res, true);
     }
 
-    else if ("admin" in user)
+    else if ("admin" in req.cookies.user)
     {
         new_event.accepted = true;
         new_event.permissions = [];
 
-        updateEventsDatabase(req.cookies.user.admin, new_event, events[req.cookies.useradmin], req, res, true);
+        updateEventsDatabase(req.cookies.user.admin, new_event, events[req.cookies.user.admin], req, res, true);
     }
 
     else
@@ -339,6 +348,22 @@ app.post("/events", function(req, res)
         {
             await client.close();
         }
+    }
+});
+
+app.get("/requests", function(req, res)
+{
+    if (req.cookies.user === undefined || !("admin" in req.cookies.user) || Object.keys(events).length === 0)
+        res.redirect("http://localhost:8080/login");
+
+    else
+    {
+        var requests = events[req.cookies.user.admin].filter(function(event)
+        {
+            return event.accepted === false;
+        });
+
+        res.render("requests.ejs", {requests: requests, user: req.cookies.user});
     }
 });
 

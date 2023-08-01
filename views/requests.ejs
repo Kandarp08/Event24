@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events</title>
+
+    <link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">    
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>    
+
+    <style>
+
+        th, td
+        {
+            text-align: center;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+        
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="icon-bar"></span>                        
+            </button>
+        
+            <a class="navbar-brand" href="#">Event24</a>
+    
+        </div>
+        
+        <div class="collapse navbar-collapse" id="navbar">
+    
+        <ul class="nav navbar-nav">
+                    
+            <li><a href="http://localhost:8080/events">Events</a></li>
+            <li><a href="#">My Events</a></li>
+            <li><a href="http://localhost:8080/requests" class="active">Requests
+                <span class="label label-danger" id="req_count"><%= requests.length %></span></a>
+            </li>
+
+        </ul>
+
+        <ul class="nav navbar-nav navbar-right">
+    
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <%= user.username %>
+                    <span class="caret"></span>
+                </a>
+                        
+                <ul class="dropdown-menu">
+                    <li><a href="http://localhost:8080/logout">Logout</a></li>
+                </ul>
+    
+            </li>
+        </ul>
+        </div>
+    </div>
+</nav>
+    
+<div class="table-responsive" style="margin: 10px;">
+    <table class="table table-hover table-bordered">
+        <thead>
+            <tr>
+
+            <th>Sr. No.</th>
+            <th>Username</th>
+            <th>Request</th>
+            <th>Event</th>
+            <th>Permission</th>
+
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <% for (let i = 0; i < requests.length; ++i) { %>
+
+                <% for (let j = 0; j < requests[i].permissions.length; ++j) { %>
+
+                <tr>
+
+                    <td><%= i + j + 1 %></td>
+                    
+                    <td><%= requests[i].permissions[j].username %></td>
+
+                    <% if (requests[i].permissions[j].type == "organise") { %>
+                        <td>Organise</td>
+                    
+                    <% } else { %>
+                        <td>Edit</td>
+                    <% } %>
+                
+                    <td><button class="btn btn-primary" data-toggle="modal" data-target="#event<%= i %>">View Event</button></td>
+                
+                    <td>
+                        <label class="radio-inline">
+                            <input type="radio" name="permission<%= i + j + 1 %>" value="approve">Approve for this event
+                        </label>
+
+                        <label class="radio-inline">
+                            <input type="radio" name="permission<%= i + j + 1 %>" value="approve_all">Approve for all events of <%= requests[i].club %>
+                        </label>
+
+                        <label class="radio-inline">
+                            <input type="radio" name="permission<%= i + j + 1%>" value="decline">Decline
+                        </label>
+                    </td>
+
+                </tr>
+
+                <% } %>
+
+            <% } %>
+
+        </tbody>
+    </table>
+</div>
+
+<% for (let i = 0; i < requests.length; ++i) { %>
+    
+    <div class="modal fade" id="event<%= i %>">
+        <div class="modal-dialog">
+            
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h2 style="text-align: center;">Event Details</h2>
+                </div>
+    
+                <div class="modal-body">
+                    
+                    <form class="form-horizontal" action="#" method="post">
+                        <fieldset>
+                                        
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Event Name</label>  
+                            <div class="col-md-4">
+                            <input type="text" class="form-control input-md" value="<%= requests[i].name %>" disabled>
+                            </div>
+                        </div>
+
+                        <br>
+
+                        <center>Organising Club: <%= requests[i].club %></center>
+
+                        <br>
+    
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Event Venue</label>  
+                            <div class="col-md-4">
+                            <input type="text" class="form-control input-md" value="<%= requests[i].venue %>" disabled>
+                            </div>
+                        </div>
+    
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Event Time</label>  
+                            <div class="col-md-4">
+                            <input type="datetime-local" class="form-control input-md" value="<%= requests[i].time %>" disabled>
+                            </div>
+                        </div>
+    
+                        <div class="form-group" style="width: 50%; margin: auto;">
+                            <label for="description">Event Description</label>
+                            <textarea class="form-control" rows="5" readonly><%= requests[i].description %></textarea>
+                        </div>
+    
+                        </fieldset>
+    
+                    </form>
+    
+                </div>
+    
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<% } %>
+
+</body>
+
+</html>
