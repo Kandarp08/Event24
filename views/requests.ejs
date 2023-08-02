@@ -42,7 +42,7 @@
             <li><a href="http://localhost:8080/events">Events</a></li>
             <li><a href="#">My Events</a></li>
             <li><a href="http://localhost:8080/requests" class="active">Requests
-                <span class="label label-danger" id="req_count"><%= requests.length %></span></a>
+                <span class="label label-danger" id="req_count"><%= req_count %></span></a>
             </li>
 
         </ul>
@@ -65,6 +65,8 @@
     </div>
 </nav>
     
+<form action="http://localhost:8080/requests" method="POST">
+
 <div class="table-responsive" style="margin: 10px;">
     <table class="table table-hover table-bordered">
         <thead>
@@ -83,7 +85,10 @@
 
             <% for (let i = 0; i < requests.length; ++i) { %>
 
-                <% for (let j = 0; j < requests[i].permissions.length; ++j) { %>
+                <% if (requests[i].accepted == true) { %>
+                    <% continue; %>
+
+                <% } for (let j = 0; j < requests[i].permissions.length; ++j) { %>
 
                 <tr>
 
@@ -102,15 +107,15 @@
                 
                     <td>
                         <label class="radio-inline">
-                            <input type="radio" name="permission<%= i + j + 1 %>" value="approve">Approve for this event
+                            <input type="radio" name="<%=i%> <%=j%>" value="approve">Approve for this event
                         </label>
 
                         <label class="radio-inline">
-                            <input type="radio" name="permission<%= i + j + 1 %>" value="approve_all">Approve for all events of <%= requests[i].club %>
+                            <input type="radio" name="<%=i%> <%=j%>" value="approve_all">Approve for all events of <%= requests[i].club %>
                         </label>
 
                         <label class="radio-inline">
-                            <input type="radio" name="permission<%= i + j + 1%>" value="decline">Decline
+                            <input type="radio" name="<%=i%> <%=j%>" value="decline">Decline
                         </label>
                     </td>
 
@@ -123,6 +128,10 @@
         </tbody>
     </table>
 </div>
+
+<input type="submit">
+
+</form>
 
 <% for (let i = 0; i < requests.length; ++i) { %>
     
@@ -137,7 +146,7 @@
     
                 <div class="modal-body">
                     
-                    <form class="form-horizontal" action="#" method="post">
+                    <form class="form-horizontal">
                         <fieldset>
                                         
                         <div class="form-group">

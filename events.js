@@ -192,11 +192,83 @@ router.get("/requests", function(req, res)
         {
             await client.close();
     
-            res.render("requests.ejs", {user: req.cookies.user, requests: institute.events.filter(function(event){return event.accepted == false;})});
+            res.render("requests.ejs", {user: req.cookies.user, requests: institute.events, req_count: institute.events.filter(function(event){ return event.accepted == false; }).length});
         }
     }
     
     fetchRequests(req.cookies.user.admin);
+});
+
+router.post("/requests", function(req, res)
+{
+    var institute_name = req.cookies.user.admin;
+    var institute;
+
+    async function updateEvents()
+    {
+        try
+        {
+            await client.connect();
+
+            var dbo = client.db("institute_data");
+        
+            institute = await dbo.collection("institutes").findOne({name: institute_name});
+        }
+
+        finally
+        {
+            await client.close();
+
+            var events = institute.events;
+            var to_be_deleted = [];
+
+            for (var permission in req.body)
+            {
+                var action = req.body[permission];
+                var i = parseInt(permission.split(" ")[0]);
+                var j = parseInt(permission.split(" ")[1]);
+
+                if (action == "decline")
+                    to_be_deleted.push(i);
+
+                else if (action == "approve")
+                {
+                    events[i].accepted = true;
+                    events[i].permissions[j].type = "allowed";
+                }
+
+                else
+                {
+                    events[i].accepted = true;
+                    events[i].permissions[j].type = "allowed";
+
+                    await client.connect();
+
+                    var dbo = client.db("userdata");
+                    await dbo.collection("users").updateOne({username: events[i].permissions[j].username}, {$push: {permissions: events[i].club}});
+
+                    await client.close();
+                }
+            }
+
+            to_be_deleted.sort();
+            var len = to_be_deleted.length;
+
+            for (let i = len - 1; i >= 0; --i)
+                requests.splice(to_be_deleted[i], 1);
+
+            await client.connect();
+
+            var dbo = client.db("institute_data");
+            await dbo.collection("institutes").updateOne({name: institute_name}, {$set: {events: events}});
+
+            await client.close();
+
+            res.redirect("http://localhost:8080/events");
+        }
+    }
+
+    updateEvents();
 });
 
 module.exports = router;
