@@ -14,12 +14,13 @@
 
         .event
         {
-            width: 150px;
-            height: 200px;
+            width: 175px;
+            height: 230px;
             margin: 20px;
 
             border: 1px solid black;
             border-radius: 10px;
+            padding-bottom: 5px;
             float: left;
         }
 
@@ -55,13 +56,13 @@
                 <li><a href="http://localhost:8080/events" class="active">Events</a></li>
                 <li><a href="#">My Events</a></li>
 
-            <% if (user.admin != undefined) { %>
+                <% if (user.admin != undefined) { %>
 
                 <li><a href="http://localhost:8080/requests">Requests
                     <span class="label label-danger" id="req_count"><%= req_count %></span></a>
                 </li>
 
-            <% } %>
+                <% } %>
 
             </ul>
 
@@ -89,7 +90,22 @@
         <% continue; %>
     <% } %>    
 
-    <div class="event" data-toggle="modal" data-target="#eventInfo<%=i%>"></div>
+    <div class="event" data-toggle="modal" data-target="#eventInfo<%=i%>">
+
+        <div style="width: 100%; height: 30%; border-bottom: 3px solid black; box-sizing: border-box; padding-top: 5px; margin-bottom: 5px;">
+        
+            <p style="text-align: center; font-size: 20px;"><%= events[i].name %></p>
+
+        </div>
+
+        <div style="margin: 5px;">
+            <p>Organised by: <%= events[i].club %></p>
+            <p>Venue: <%= events[i].venue %></p>
+            <p id="eventDate<%=i%>">Date: </p> 
+            <p id="eventTime<%=i%>">Time: </p>
+        </div>
+
+    </div>
     
     <div class="modal fade" id="eventInfo<%=i%>">
         <div class="modal-dialog">
@@ -111,8 +127,6 @@
                             <input type="text" class="form-control input-md" value="<%= events[i].name %>" disabled>
                             </div>
                         </div>
-
-                        <br>
 
                         <center>Organising Club: <%= events[i].club %></center>
 
@@ -155,7 +169,7 @@
 <div class="event" data-toggle="modal" data-target="#newEvent">
 
     <center>
-    <span class="glyphicon glyphicon-plus" style="margin: 75px auto; font-size: 50px;"></span>
+    <span class="glyphicon glyphicon-plus" style="margin: 90px auto; font-size: 50px;"></span>
     </center>
     
 </div>
@@ -181,7 +195,7 @@
                         </div>
                     </div>
 
-                    <center>Select organizing club : 
+                    <center>Select organising club : 
 
                     <select name="club" id="club" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur(); displayButtons();">
 
@@ -233,9 +247,21 @@
 <script>
 
 var user = <%- JSON.stringify(user) %>;
+var events = <%- JSON.stringify(events) %>;
 var permissions = user.permissions;
 
+var months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 displayButtons();
+
+for (let i = 0; i < events.length; ++i)
+{
+    var datetime = events[i].time;
+    var date = new Date(datetime);
+
+    document.getElementById("eventDate" + i).innerHTML += date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
+    document.getElementById("eventTime" + i).innerHTML += date.getHours() + ":" + date.getMinutes();
+}
 
 function displayButtons()
 {

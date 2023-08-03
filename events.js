@@ -133,7 +133,7 @@ router.post("/events", function(req, res)
     if (!("admin" in req.cookies.user) && req.cookies.user.permissions.includes(new_event.club))
     {
         new_event.accepted = true;
-        new_event.permissions.type = "allowed";
+        new_event.permissions = [];
 
         updateEvents(req.cookies.user.institute, new_event, true);
     }
