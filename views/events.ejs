@@ -90,20 +90,59 @@
     <% } %>    
 
     <div class="event" data-toggle="modal" data-target="#eventInfo<%=i%>"></div>
-
+    
     <div class="modal fade" id="eventInfo<%=i%>">
         <div class="modal-dialog">
             
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h2><%=events[i].name %></h2>
+                    <h2 style="text-align: center;">Event Details</h2>
                 </div>
-
+    
                 <div class="modal-body">
-                    <pre><%=events[i].description%></pre>
-                </div>
+                    
+                    <form class="form-horizontal">
+                        <fieldset>
+                                        
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Event Name</label>  
+                            <div class="col-md-4">
+                            <input type="text" class="form-control input-md" value="<%= events[i].name %>" disabled>
+                            </div>
+                        </div>
 
+                        <br>
+
+                        <center>Organising Club: <%= events[i].club %></center>
+
+                        <br>
+    
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Event Venue</label>  
+                            <div class="col-md-4">
+                            <input type="text" class="form-control input-md" value="<%= events[i].venue %>" disabled>
+                            </div>
+                        </div>
+    
+                        <div class="form-group">
+                            <label class="col-md-4 control-label">Event Time</label>  
+                            <div class="col-md-4">
+                            <input type="datetime-local" class="form-control input-md" value="<%= events[i].time %>" disabled>
+                            </div>
+                        </div>
+    
+                        <div class="form-group" style="width: 50%; margin: auto;">
+                            <label for="description">Event Description</label>
+                            <textarea class="form-control" rows="5" readonly><%= events[i].description %></textarea>
+                        </div>
+    
+                        </fieldset>
+    
+                    </form>
+    
+                </div>
+    
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>

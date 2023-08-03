@@ -24,6 +24,65 @@ const admin_data = JSON.parse(process.env.ADMIN_DATA);
 
 const nodemailer = require("nodemailer");
 
+async function mailInterestedUsers(institute_name, new_event)
+{
+    const transporter = nodemailer.createTransport
+    ({
+        host: admin_data[institute_name].host,
+    
+        auth:
+        {
+            user: admin_data[institute_name].user,
+            pass: admin_data[institute_name].pass
+        }
+    });
+    
+    const mailOptions = 
+    {
+        from: admin_data[institute_name].user,
+
+        subject: new_event.name,
+        text: new_event.description
+    }
+
+    try
+    {
+        await client.connect();
+
+        var dbo = client.db("userdata");
+
+        var all_users = await dbo.collection("users").find({}).toArray();
+
+        for (var user of all_users)
+        {
+            mailOptions.to = user.email;
+
+            if (("admin" in user) && user.admin == institute_name)
+            {
+                transporter.sendMail(mailOptions, function (err, info) 
+                {
+                    if (err)
+                        console.log(err);
+                });
+            }
+
+            else if (!("admin" in user) && user.institute == institute_name && user.interests.includes(new_event.club))
+            {
+                transporter.sendMail(mailOptions, function(err, info)
+                {
+                    if (err)
+                        console.log(err);
+                });
+            }
+        }
+    }
+
+    finally
+    {
+        await client.close();
+    }
+}
+
 router.get("/events", function(req, res)
 {
     if (req.cookies.user == undefined)
@@ -68,13 +127,13 @@ router.post("/events", function(req, res)
         time: req.body.time,
         description: req.body.description,
         accepted: false,
-        permissions: [{username: req.cookies.user.username, type: "organise"}],
+        permissions: [{username: req.cookies.user.username, email: req.cookies.user.email, type: "organise"}],
     };
 
     if (!("admin" in req.cookies.user) && req.cookies.user.permissions.includes(new_event.club))
     {
         new_event.accepted = true;
-        new_event.permissions = [{username: req.cookies.user.username, type: "allowed"}];
+        new_event.permissions.type = "allowed";
 
         updateEvents(req.cookies.user.institute, new_event, true);
     }
@@ -108,65 +167,6 @@ router.post("/events", function(req, res)
                 await mailInterestedUsers(institute_name, new_event);
             
             res.redirect("http://localhost:8080/events");
-        }
-    }
-
-    async function mailInterestedUsers(institute_name, new_event)
-    {
-        const transporter = nodemailer.createTransport
-        ({
-            host: admin_data[institute_name].host,
-
-            auth:
-            {
-                user: admin_data[institute_name].user,
-                pass: admin_data[institute_name].pass
-            }
-        });
-
-        const mailOptions =
-        {
-            from: admin_data[institute_name].user,
-        
-            subject: new_event.name,
-            text: new_event.description
-        };
-
-        try
-        {
-            await client.connect();
-
-            var dbo = client.db("userdata");
-
-            var interested_users = await dbo.collection("users").find({}).toArray();
-
-            for (var user of interested_users)
-            {
-                mailOptions.to = user.email;
-
-                if (("admin" in user) && user.admin == institute_name)
-                {
-                    transporter.sendMail(mailOptions, function (err, info) 
-                    {
-                        if (err)
-                            console.log(err);
-                    });
-                }
-
-                else if (user.institute == institute_name && user.interests.includes(new_event.club))
-                {
-                    transporter.sendMail(mailOptions, function(err, info)
-                    {
-                        if (err)
-                            console.log(err);
-                    });
-                }
-            }
-        }
-
-        finally
-        {
-            await client.close();
         }
     }
 });
@@ -228,13 +228,29 @@ router.post("/requests", function(req, res)
                 var i = parseInt(permission.split(" ")[0]);
                 var j = parseInt(permission.split(" ")[1]);
 
+                var subject, text;
+
                 if (action == "decline")
+                {
+                    subject = "Request for event declined";
+
+                    text = "Dear " + events[i].permissions[j].username + ", \n\nThe event " + events[i].name +
+                            " has been declined by the admin.\n\nThank you";
+
                     to_be_deleted.push(i);
+                }
 
                 else if (action == "approve")
                 {
                     events[i].accepted = true;
                     events[i].permissions[j].type = "allowed";
+
+                    subject = "Event approved";
+
+                    text = "Dear " + events[i].permissions[j].username + ", \n\nThe event " + events[i].name +
+                            " has been approved by the admin.\n\nThank you";
+
+                    await mailInterestedUsers(institute_name, events[i]);
                 }
 
                 else
@@ -242,20 +258,30 @@ router.post("/requests", function(req, res)
                     events[i].accepted = true;
                     events[i].permissions[j].type = "allowed";
 
+                    subject = "Event approved";
+
+                    text = "Dear " + events[i].permissions[j].username + ", \n\nThe event " + events[i].name + 
+                            " has been approved by the admin.\n\nYou have been granted permission to organise all events of " +
+                            events[i].club + ".\n\nThank you";
+
                     await client.connect();
 
                     var dbo = client.db("userdata");
                     await dbo.collection("users").updateOne({username: events[i].permissions[j].username}, {$push: {permissions: events[i].club}});
 
                     await client.close();
+
+                    await mailInterestedUsers(institute_name, events[i]);
                 }
+                
+                await mailUser(institute.name, events[i].permissions[j].email, subject, text);
             }
 
             to_be_deleted.sort();
             var len = to_be_deleted.length;
 
             for (let i = len - 1; i >= 0; --i)
-                requests.splice(to_be_deleted[i], 1);
+                events.splice(to_be_deleted[i], 1);
 
             await client.connect();
 
@@ -266,6 +292,35 @@ router.post("/requests", function(req, res)
 
             res.redirect("http://localhost:8080/events");
         }
+    }
+
+    async function mailUser(institute_name, recipient, subject, text)
+    {       
+        const transporter = nodemailer.createTransport
+        ({
+            host: admin_data[institute_name].host,
+        
+            auth:
+            {
+                user: admin_data[institute_name].user,
+                pass: admin_data[institute_name].pass
+            }
+        });
+        
+        const mailOptions = 
+        {
+            from: admin_data[institute_name].user,
+            to: recipient,
+
+            subject: subject,
+            text: text
+        }
+
+        transporter.sendMail(mailOptions, function(err, info)
+        {
+            if (err)
+                console.log(err);
+        });
     }
 
     updateEvents();

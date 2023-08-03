@@ -83,16 +83,19 @@
 
         <tbody>
 
-            <% for (let i = 0; i < requests.length; ++i) { %>
+            <% for (let i = 0, sr_no = 0; i < requests.length; ++i) { %>
 
                 <% if (requests[i].accepted == true) { %>
                     <% continue; %>
+
+                <% } else { %>
+                    <% ++sr_no; %>
 
                 <% } for (let j = 0; j < requests[i].permissions.length; ++j) { %>
 
                 <tr>
 
-                    <td><%= i + j + 1 %></td>
+                    <td><%= sr_no %></td>
                     
                     <td><%= requests[i].permissions[j].username %></td>
 
@@ -129,7 +132,7 @@
     </table>
 </div>
 
-<input type="submit">
+<center><button type="submit" class="btn btn-success">Confirm Changes</button></center>
 
 </form>
 
