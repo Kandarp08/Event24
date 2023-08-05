@@ -42,7 +42,7 @@
             <li><a href="http://localhost:8080/events">Events</a></li>
             <li><a href="#">My Events</a></li>
             <li><a href="http://localhost:8080/requests" class="active">Requests
-                <span class="label label-danger" id="req_count"><%= req_count %></span></a>
+                <span class="label label-danger" id="req_count"></span></a>
             </li>
 
         </ul>
@@ -83,27 +83,33 @@
 
         <tbody>
 
-            <% for (let i = 0, sr_no = 0; i < requests.length; ++i) { %>
+            <% for (let i = 0, sr_no = 1; i < events.length; ++i) { %>
 
-                <% if (requests[i].accepted == true) { %>
-                    <% continue; %>
-
-                <% } else { %>
-                    <% ++sr_no; %>
-
-                <% } for (let j = 0; j < requests[i].permissions.length; ++j) { %>
+                <% for (let j = 0; j < events[i].permissions.length; ++j) { %>
 
                 <tr>
 
-                    <td><%= sr_no %></td>
-                    
-                    <td><%= requests[i].permissions[j].username %></td>
-
-                    <% if (requests[i].permissions[j].type == "organise") { %>
-                        <td>Organise</td>
-                    
+                    <% if (events[i].permissions[j].type == "organise" || events[i].permissions[j].type == "edit" || events[i].permissions[j].type == "cancel") { %>
+                        <% continue; %>
+                        
                     <% } else { %>
-                        <td>Edit</td>
+
+                        <td><%= sr_no++ %></td>
+
+                        <td><%= events[i].permissions[j].username %></td>
+
+                        <% if (events[i].permissions[j].type == "organise_request") { %>
+                            <td>Organise</td>
+
+                        <% } else if (events[i].permissions[j].type == "edit_request") { %>
+                            <td>Edit</td>
+
+                        <% } else if (events[i].permissions[j].type == "cancel_request") { %>
+                            <td>Cancel</td>
+                        
+                        <% } else { %>
+                            <% continue; } %>
+
                     <% } %>
                 
                     <td><button class="btn btn-primary" data-toggle="modal" data-target="#event<%= i %>">View Event</button></td>
@@ -114,11 +120,15 @@
                         </label>
 
                         <label class="radio-inline">
-                            <input type="radio" name="<%=i%> <%=j%>" value="approve_all">Approve for all events of <%= requests[i].club %>
+                            <input type="radio" name="<%=i%> <%=j%>" value="approve_all">Approve for all events of <%= events[i].club %>
                         </label>
 
                         <label class="radio-inline">
                             <input type="radio" name="<%=i%> <%=j%>" value="decline">Decline
+                        </label>
+
+                        <label class="radio-inline">
+                            <input type="radio" name="<%=i%> <%=j%>" value="noaction">No action
                         </label>
                     </td>
 
@@ -136,7 +146,7 @@
 
 </form>
 
-<% for (let i = 0; i < requests.length; ++i) { %>
+<% for (let i = 0; i < events.length; ++i) { %>
     
     <div class="modal fade" id="event<%= i %>">
         <div class="modal-dialog">
@@ -155,33 +165,33 @@
                         <div class="form-group">
                             <label class="col-md-4 control-label">Event Name</label>  
                             <div class="col-md-4">
-                            <input type="text" class="form-control input-md" value="<%= requests[i].name %>" disabled>
+                            <input type="text" class="form-control input-md" value="<%= events[i].name %>" disabled>
                             </div>
                         </div>
 
                         <br>
 
-                        <center>Organising Club: <%= requests[i].club %></center>
+                        <center>Organising Club: <%= events[i].club %></center>
 
                         <br>
     
                         <div class="form-group">
                             <label class="col-md-4 control-label">Event Venue</label>  
                             <div class="col-md-4">
-                            <input type="text" class="form-control input-md" value="<%= requests[i].venue %>" disabled>
+                            <input type="text" class="form-control input-md" value="<%= events[i].venue %>" disabled>
                             </div>
                         </div>
     
                         <div class="form-group">
                             <label class="col-md-4 control-label">Event Time</label>  
                             <div class="col-md-4">
-                            <input type="datetime-local" class="form-control input-md" value="<%= requests[i].time %>" disabled>
+                            <input type="datetime-local" class="form-control input-md" value="<%= events[i].time %>" disabled>
                             </div>
                         </div>
     
                         <div class="form-group" style="width: 50%; margin: auto;">
                             <label for="description">Event Description</label>
-                            <textarea class="form-control" rows="5" readonly><%= requests[i].description %></textarea>
+                            <textarea class="form-control" rows="5" readonly><%= events[i].description %></textarea>
                         </div>
     
                         </fieldset>
@@ -198,6 +208,31 @@
     </div>
 
 <% } %>
+
+<script>
+
+countRequests();
+
+function countRequests()
+{
+    var req_count = 0;
+    var events = <%-JSON.stringify(events)%>;
+
+    for (let i = 0; i < events.length; ++i)
+    {
+        for (let j = 0; j < events[i].permissions.length; ++j)
+        {
+            if (events[i].permissions[j].type == "organise_request" || events[i].permissions[j].type == "edit_request" ||
+                events[i].permissions[j].type == "cancel_request")
+                ++req_count;
+        }
+    }
+
+    console.log(req_count.toString());
+    document.getElementById("req_count").textContent = req_count.toString();
+}
+
+</script>
 
 </body>
 

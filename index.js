@@ -25,10 +25,12 @@ module.exports = client;
 const login_router = require("./login");
 const registration_router = require("./registration");
 const events_router = require("./events");
+const requests_router = require("./requests");
 
 app.use("/", login_router);
 app.use("/", registration_router);
 app.use("/", events_router);
+app.use("/", requests_router);
 
 app.get("/event24", function(req, res)
 {
