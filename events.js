@@ -24,7 +24,7 @@ const admin_data = JSON.parse(process.env.ADMIN_DATA);
 
 const nodemailer = require("nodemailer");
 
-async function mailInterestedUsers(institute_name, new_event, subject, text)
+async function mailInterestedUsers(institute_name, club, subject, text)
 {
     const transporter = nodemailer.createTransport
     ({
@@ -66,7 +66,7 @@ async function mailInterestedUsers(institute_name, new_event, subject, text)
                 });
             }
 
-            else if (!("admin" in user) && user.institute == institute_name && user.interests.includes(new_event.club))
+            else if (!("admin" in user) && user.institute == institute_name && user.interests.includes(club))
             {
                 transporter.sendMail(mailOptions, function(err, info)
                 {
@@ -136,7 +136,7 @@ router.post("/newevent", function(req, res)
         new_event.accepted = true;
         new_event.permissions = [];
 
-        updateEvents(req.cookies.user.institute, new_event, true);
+        addEvent(req.cookies.user.institute, new_event, true);
     }
 
     else if ("admin" in req.cookies.user)
@@ -144,20 +144,20 @@ router.post("/newevent", function(req, res)
         new_event.accepted = true;
         new_event.permissions = [];
 
-        updateEvents(req.cookies.user.admin, new_event, true);
+        addEvent(req.cookies.user.admin, new_event, true);
     }
 
     else
-        updateEvents(req.cookies.user.institute, new_event, false);
+        addEvent(req.cookies.user.institute, new_event, false);
 
-    async function updateEvents(institute_name, new_event, mail_flag)
+    async function addEvent(institute_name, new_event, mail_flag)
     {
         try
         {
             await client.connect();
 
             var dbo = client.db("institute_data");
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: new_event}});
+            await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: {$each: [new_event], $sort: {time: 1}}}});
         }
 
         finally
@@ -165,7 +165,7 @@ router.post("/newevent", function(req, res)
             await client.close();
 
             if (mail_flag)
-                await mailInterestedUsers(institute_name, new_event, new_event.name, new_event.description);
+                await mailInterestedUsers(institute_name, new_event.club, new_event.name, new_event.description);
             
             res.redirect("http://localhost:8080/events");
         }
@@ -180,6 +180,64 @@ router.post("/edit", function(req, res)
 router.post("/cancel", function(req, res)
 {
     var event_id = parseInt(Object.keys(req.body)[0].substr(4, Object.keys(req.body)[0].length - 4));
+    var event = req.body;
+
+    event["name"] = event["name" + event_id];
+    delete event["name" + event_id];
+
+    if ("admin" in req.cookies.user)
+        removeEvent(req.cookies.user.admin, event).catch(console.dir);
+
+    else
+        removeEvent(req.cookies.user.institute, event).catch(console.dir);
+
+    async function removeEvent(institute_name, event)
+    {
+        var institute;
+
+        try
+        {
+            await client.connect();
+
+            var dbo = client.db("institute_data");
+            institute = await dbo.collection("institutes").findOne({name: institute_name});
+        }
+
+        finally
+        {
+            var events = institute.events;
+            var eventIndex = -1;
+
+            for (let i = 0; i < events.length; ++i)
+            {
+                var element = events[i];
+
+                if (element.name == event.name && element.club == event.club && element.venue == event.venue &&
+                    element.time == event.time && element.description == event.description)
+                {
+                    eventIndex = i;
+                    break;
+                }
+            }
+
+            if (eventIndex != -1)
+            {
+                events.splice(eventIndex, 1);
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$set: {events: events}});
+
+                await client.close();
+
+                var mailText = "The event " + event.name + " organised by " + event.club + " has been cancelled.\n\nThank you";
+
+                await mailInterestedUsers(institute_name, event.club, "Cancelled : " + event.name, mailText);
+            }
+
+            else
+                await client.close();
+
+            res.redirect("http://localhost:8080/events");
+        }
+    }
 });
 
 router.post("/editrequest", function(req, res)

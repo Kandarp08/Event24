@@ -148,7 +148,7 @@
                         <div class="form-group">
                             <label class="col-md-4 control-label">Event Time</label>  
                             <div class="col-md-4">
-                            <input type="datetime-local" class="form-control input-md" id="time<%=i%>" name="time" value="<%= events[i].time %>" disbaled>
+                            <input type="datetime-local" class="form-control input-md" id="time<%=i%>" name="time" value="<%= events[i].time %>" disabled>
                             </div>
                         </div>
     
@@ -289,30 +289,43 @@ function arrangeEventButton()
         document.getElementById("arrange").innerHTML = "Request Permission";
 }
 
+function hasPermission(user, event, special_permission)
+{
+    if (user.permissions.includes(event.club))
+        return true;
+
+    if (event.permissions.some(el => el.username == user.username && el.email == user.email && el.type == "organise"))
+        return true;
+
+    else if (special_permission == "edit" && event.permissions.some(el => el.username == user.username && el.email == user.email && el.type == "edit"))
+        return true;
+
+    else if (special_permission == "cancel" && event.permissions.some(el => el.username == user.username && el.email == user.email && el.type == "cancel"))
+        return true;
+
+    return false;
+}
+
 function setPermissions()
 {
     for (let i = 0; i < events.length; ++i)
     {
-        var user_permission_organise = {username: user.username, email: user.email, type: "organise_request"};
-        var user_permission_edit = {username: user.username, email: user.email, type: "edit_request"};
-        var user_permission_cancel = {username: user.username, email: user.email, type: "cancel_request"};
-
         if (events[i].accepted == false)
             continue;
 
-        if (("admin" in user) || events[i].permissions.includes(user_permission_organise) || events[i].permissions.includes(user_permission_edit) || user.permissions.includes(events[i].club))
+        if (("admin" in user) || hasPermission(user, events[i], "edit"))
         {
             document.getElementById("edit" + i).innerHTML = "Edit Event";
             document.getElementById("edit" + i).setAttribute("formaction", "http://localhost:8080/edit");
 
-            document.getElementById("name" + i).setAttribute("disabled", "false");
-            document.getElementById("club" + i).setAttribute("disabled", "false");
-            document.getElementById("venue" + i).setAttribute("disabled", "false");
-            document.getElementById("time" + i).setAttribute("disabled", "false");
-            document.getElementById("description" + i).setAttribute("readonly", "false");
+            document.getElementById("name" + i).disabled = false;
+            document.getElementById("club" + i).disabled = false;
+            document.getElementById("venue" + i).disabled = false;
+            document.getElementById("time" + i).disabled = false;
+            document.getElementById("description" + i).readOnly = false;
         }
 
-        if (("admin" in user) || events[i].permissions.includes(user_permission_organise) || events[i].permissions.includes(user_permission_cancel) || user.permissions.includes(events[i].club))
+        if (("admin" in user) || hasPermission(user, events[i], "cancel"))
         {
             document.getElementById("cancel" + i).innerHTML = "Cancel Event";
             document.getElementById("cancel" + i).setAttribute("formaction", "http://localhost:8080/cancel");

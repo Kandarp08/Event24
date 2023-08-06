@@ -117,9 +117,7 @@ router.post("/requests", function(req, res)
     var institute_name = req.cookies.user.admin;
     var institute;
 
-    console.log(req.body);
-
-    updateEvents();
+    updateEvents().catch(console.dir);
 
     async function updateEvents()
     {
@@ -155,9 +153,7 @@ router.post("/requests", function(req, res)
                 {
                     if (events[i].permissions[j].type === "organise_request")
                     {
-                        console.log(events[i].name + " approved");
-
-                        events[i].permissions[j].accepted = true;
+                        events[i].accepted = true;
                         events[i].permissions[j].type = "organise";
 
                         subject = "Event approved";
@@ -180,8 +176,6 @@ router.post("/requests", function(req, res)
 
                     else if (events[i].permissions[j].type === "cancel_request")
                     {
-                        console.log(events[i].name + " cancelled");
-
                         cancelledIndices.push(i);
 
                         subject = "Cancel request accepted";

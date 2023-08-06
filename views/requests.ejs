@@ -65,7 +65,7 @@
     </div>
 </nav>
     
-<form action="http://localhost:8080/requests" method="POST">
+<form id="requests_table" action="http://localhost:8080/requests" method="POST">
 
 <div class="table-responsive" style="margin: 10px;">
     <table class="table table-hover table-bordered">
@@ -112,7 +112,7 @@
 
                     <% } %>
                 
-                    <td><button class="btn btn-primary" data-toggle="modal" data-target="#event<%= i %>">View Event</button></td>
+                    <td><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#event<%= i %>">View Event</button></td>
                 
                     <td>
                         <label class="radio-inline">
@@ -228,7 +228,9 @@ function countRequests()
         }
     }
 
-    console.log(req_count.toString());
+    if (req_count == 0)
+        document.getElementById("requests_table").innerHTML = "<h3 style='text-align: center;'>No pending requests</h3>";
+
     document.getElementById("req_count").textContent = req_count.toString();
 }
 
