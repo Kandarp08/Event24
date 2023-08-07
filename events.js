@@ -202,6 +202,9 @@ router.post("/cancel", function(req, res)
         {
             await client.close();
 
+            var mailText = "The event " + req.body.name + " has been cancelled.\n\nThank you";
+            await mailInterestedUsers(institute_name, req.body.club, "Cancelled : " + req.body.name, mailText);
+
             res.redirect("http://localhost:8080/events");
         }
     }
@@ -289,8 +292,6 @@ router.post("/edit", function(req, res)
 
                     updated_event = events[i];
 
-                    await mailInterestedUsers(institute_name, events[i].club, "Updated : " + events[i].name, events[i].description);
-
                     break;
                 }
             }
@@ -299,6 +300,8 @@ router.post("/edit", function(req, res)
             await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: {$each: [updated_event], $sort: {time: 1}}}});
 
             await client.close();
+
+            await mailInterestedUsers(institute_name, events[i].club, "Updated : " + updated_event.name, updated_event.description);
 
             res.redirect("http://localhost:8080/events");
         }
