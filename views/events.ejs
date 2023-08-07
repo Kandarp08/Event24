@@ -121,13 +121,15 @@
     
                 <div class="modal-body">
                     
-                    <form id="form<%=i%>" class="form-horizontal" method="POST">
+                    <form id="form<%=i%>" class="form-horizontal" method="POST" onsubmit="disable('<%=i%>')">
                         <fieldset>
+
+                        <input type="hidden" name="id" value="<%= events[i].id %>">
                                         
                         <div class="form-group">
                             <label class="col-md-4 control-label">Event Name</label>  
                             <div class="col-md-4">
-                            <input type="text" class="form-control input-md" id="name<%=i%>" name="name<%=i%>" value="<%= events[i].name %>" disabled>
+                            <input type="text" class="form-control input-md" id="name<%=i%>" name="name" value="<%= events[i].name %>" disabled>
                             </div>
                         </div>
 
@@ -158,8 +160,8 @@
                         </div>
 
                         <br>
-                        <button type="submit" id="cancel<%=i%>" action="http://localhost:8080/cancelrequest" class="btn btn-danger" style="float: right; margin-left: 10px;">Request Cancellation</button>
-                        <button type="submit" id="edit<%=i%>" action="http://localhost:8080/editrequest" class="btn btn-success" style="float: right;">Request Edit</button>
+                        <button type="submit" id="cancel<%=i%>" formaction="http://localhost:8080/cancelrequest" class="btn btn-danger" style="float: right; margin-left: 10px;">Request Cancellation</button>
+                        <button type="submit" id="edit<%=i%>" formaction="http://localhost:8080/editrequest" class="btn btn-success" style="float: right;">Request Edit</button>
 
                         </fieldset>
                     </form>    
@@ -193,7 +195,7 @@
 
             <div class="modal-body">
                 
-                <form class="form-horizontal" action="http://localhost:8080/newevent" method="POST">
+                <form class="form-horizontal" action="http://localhost:8080/newevent" method="POST" onsubmit="document.getElementById('arrange').disabled = true;">
                     <fieldset>
                                     
                     <div class="form-group">
@@ -348,6 +350,12 @@ function countRequests()
     }
 
     document.getElementById("req_count").textContent = req_count.toString();
+}
+
+function disable(i)
+{
+    document.getElementById("edit" + i).disabled = true;
+    document.getElementById("cancel" + i).disabled = true;
 }
 
 </script>
