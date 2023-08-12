@@ -86,6 +86,28 @@ async function mailInterestedUsers(institute_name, club, subject, text)
     }
 }
 
+function scheduleRemoval(institute_name, new_event)
+{
+    var completionDate = new Date(new_event.time);
+    var removeTaskTime = completionDate.getSeconds() + " " + completionDate.getMinutes() + " " + completionDate.getHours() + 
+                        " " + completionDate.getDate() + " " + (completionDate.getMonth() + 1) + " " + completionDate.getDay();
+
+    cron.schedule(removeTaskTime, async function removeEvent()
+    {
+        try
+        {
+            await client.connect();
+
+            let dbo = client.db("institute_data");
+            await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: new_event.id}}});
+        }
+
+        finally
+        {
+            await client.close();
+        }
+    });
+}
 
 router.get("/events", function(req, res)
 {
@@ -168,30 +190,12 @@ router.post("/newevent", function(req, res)
             var newevent_id = await institute.events_id;
             new_event.id = await newevent_id;
 
-            var completionDate = new Date(new_event.time);
-            var removeTaskTime = completionDate.getSeconds() + " " + completionDate.getMinutes() + " " + completionDate.getHours() + 
-                                " " + completionDate.getDate() + " " + (completionDate.getMonth() + 1) + " " + completionDate.getDay();
-
-            new_event.removeTask = JSON.parse(CircularJSON.stringify(cron.schedule(removeTaskTime, async function removeEvent()
-            {
-                try
-                {
-                    await client.connect();
-
-                    let dbo = client.db("institute_data");
-                    await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: newevent_id}}});
-                }
-
-                finally
-                {
-                    await client.close();
-                }
-            })));
-
             await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: {$each: [new_event], $sort: {time: 1}}}});
             await dbo.collection("institutes").updateOne({name: institute_name}, {$inc: {events_id: 1}});
 
             await client.close();
+
+            scheduleRemoval(await institute_name, new_event);
 
             if (mail_flag)
                 await mailInterestedUsers(institute_name, new_event.club, new_event.name, new_event.description);
@@ -279,6 +283,7 @@ router.post("/cancelrequest", function(req, res)
 router.post("/edit", function(req, res)
 {   
     var updated_event = req.body;
+    var old_id = parseInt(updated_event.id);
 
     if ("admin" in req.cookies.user)
         editEvent(req.cookies.user.admin);
@@ -295,61 +300,37 @@ router.post("/edit", function(req, res)
             await client.connect();
 
             var dbo = client.db("institute_data");
-
             institute = await dbo.collection("institutes").findOne({name: institute_name});
-        }
 
-        finally
-        {
             var events = await institute.events;
-
+        
             for (let i = 0; i < await events.length; ++i)
             {
                 if (events[i].id == updated_event.id)
                 {
+                    events[i].id = institute.events_id;
                     events[i].name = updated_event.name;
                     events[i].club = updated_event.club;
                     events[i].venue = updated_event.venue;
-
-                    if (events[i].time != updated_event.time)
-                    {
-                        events[i].removeTask.options.scheduled = false;
-                        
-                        var completionDate = new Date(updated_event.time);
-                        var removeTaskTime = completionDate.getSeconds() + " " + completionDate.getMinutes() + " " + completionDate.getHours() + 
-                            " " + completionDate.getDate() + " " + (completionDate.getMonth() + 1) + " " + completionDate.getDay();
-
-                        events[i].removeTask = JSON.parse(CircularJSON.stringify(cron.schedule(removeTaskTime, async function removeEvent()
-                        {
-                            try
-                            {
-                                await client.connect();
-
-                                let dbo = client.db("institute_data");
-                                await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: updated_event.id}}});
-                            }
-
-                            finally
-                            {
-                                await client.close();
-                            }
-                        })));
-                    }
-
                     events[i].time = updated_event.time;
                     events[i].description = updated_event.description;
 
-                    updated_event = events[i];
+                    updated_event = events[i];                    
+                    scheduleRemoval(await institute.name, updated_event);
 
                     break;
                 }
             }
-
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: updated_event.id}}});
+            
+            await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: old_id}}});
             await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: {$each: [updated_event], $sort: {time: 1}}}});
+            await dbo.collection("institutes").updateOne({name: institute_name}, {$inc: {events_id: 1}});
+        }
 
+        finally
+        {
             await client.close();
-
+            
             await mailInterestedUsers(institute_name, updated_event.club, "Updated : " + updated_event.name, updated_event.description);
 
             res.redirect("http://localhost:8080/events");
