@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 
 const cron = require("node-cron");
-const CircularJSON = require("circular-json");
 
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
@@ -27,7 +26,7 @@ const admin_data = JSON.parse(process.env.ADMIN_DATA);
 
 const nodemailer = require("nodemailer");
 
-async function mailInterestedUsers(institute_name, club, subject, text)
+async function mailInterestedUsers(institute_name, event, subject, text)
 {
     const transporter = nodemailer.createTransport
     ({
@@ -40,7 +39,7 @@ async function mailInterestedUsers(institute_name, club, subject, text)
         }
     });
     
-    const mailOptions = 
+    var mailOptions = 
     {
         from: admin_data[institute_name].user,
 
@@ -69,13 +68,16 @@ async function mailInterestedUsers(institute_name, club, subject, text)
                 });
             }
 
-            else if (!("admin" in user) && user.institute == institute_name && user.interests.includes(club))
+            else if (!("admin" in user) && user.institute == institute_name && user.interests.includes(event.club))
             {
                 transporter.sendMail(mailOptions, function(err, info)
                 {
                     if (err)
                         console.log(err);
                 });
+
+                if (user.remind == true)
+                    scheduleMail(mailOptions, user.email, transporter, institute_name, event);
             }
         }
     }
@@ -100,6 +102,49 @@ function scheduleRemoval(institute_name, new_event)
 
             let dbo = client.db("institute_data");
             await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: new_event.id}}});
+        }
+
+        finally
+        {
+            await client.close();
+        }
+    });
+}
+
+function scheduleMail(mailOptions, email, transporter, institute_name, curr_event)
+{
+    var eventTime = new Date(curr_event.time);
+    var mailTime = eventTime.getSeconds() + " " + eventTime.getMinutes() + " " + (eventTime.getHours() - 1) + 
+                    " " + eventTime.getDate() + " " + (eventTime.getMonth() + 1) + " " + eventTime.getDay();
+
+    cron.schedule(mailTime, async function remindMail()
+    {
+        try
+        {
+            await client.connect();
+
+            var dbo = client.db("institute_data");
+            var institute = await dbo.collection("institutes").findOne({name: institute_name});
+
+            var events = await institute.events;
+
+            var req_event = await events.filter(function(event)
+            {
+                return event.id === curr_event.id;
+            });
+
+            if (req_event.length > 0)
+            {
+                mailOptions.to = email;
+                mailOptions.subject = "Reminder : " + req_event[0].name;
+                mailOptions.text = req_event[0].description;
+
+                transporter.sendMail(mailOptions, function(err, info)
+                {
+                    if (err)
+                        console.log(err);
+                });
+            }
         }
 
         finally
@@ -198,7 +243,7 @@ router.post("/newevent", function(req, res)
             scheduleRemoval(await institute_name, new_event);
 
             if (mail_flag)
-                await mailInterestedUsers(institute_name, new_event.club, new_event.name, new_event.description);
+                await mailInterestedUsers(institute_name, new_event, new_event.name, new_event.description);
             
             res.redirect("http://localhost:8080/events");
         }
@@ -230,7 +275,7 @@ router.post("/cancel", function(req, res)
             await client.close();
 
             var mailText = "The event " + req.body.name + ", organised by " + req.body.club + ", has been cancelled.\n\nThank you";
-            await mailInterestedUsers(institute_name, req.body.club, "Cancelled : " + req.body.name, mailText);
+            await mailInterestedUsers(institute_name, req.body, "Cancelled : " + req.body.name, mailText);
 
             res.redirect("http://localhost:8080/events");
         }
@@ -331,7 +376,7 @@ router.post("/edit", function(req, res)
         {
             await client.close();
             
-            await mailInterestedUsers(institute_name, updated_event.club, "Updated : " + updated_event.name, updated_event.description);
+            await mailInterestedUsers(institute_name, updated_event, "Updated : " + updated_event.name, updated_event.description);
 
             res.redirect("http://localhost:8080/events");
         }

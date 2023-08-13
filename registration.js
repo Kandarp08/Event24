@@ -84,10 +84,15 @@ router.post("/register", function(req, res)
                 password: req.body.password,
                 email: req.body.email,
                 institute: req.body.institute,
-                remind: req.body.remind,
                 interests: [],
                 permissions: [],
             }
+
+            if (req.body.remind == "true")
+                doc.remind = true;
+
+            else
+                doc.remind = false;
 
             for (var cat of req.body.category)
                 doc.interests.push(cat);
