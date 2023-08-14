@@ -9,6 +9,19 @@
     <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>    
 
+    <style>
+
+        .details-container
+        { 
+            margin: 15px; 
+            padding-left: 20px; 
+            padding-bottom: 20px;
+            border: 1px solid black; 
+            box-sizing: border-box;
+        }
+
+    </style>
+
 </head>
 
 <body>
@@ -60,6 +73,209 @@
         </div>
     </div>
 </nav>
+
+<form action="http://localhost:8080/profile" method="POST">
+    <fieldset>
+
+        <div class="details-container">
+
+            <h3 style="text-align: center;">Personal Details</h3> <br>
+                
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="name">Username</label>  
+                <div class="col-md-4">
+                <input id="username" name="username" type="text" class="form-control input-md" value="<%= user.username %>" disabled>
+                </div>
+            </div>
+
+            <br><br>
+
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="password">Password <button type="button"><span id="password-eye-icon" class="glyphicon glyphicon-eye-close" onClick="changeIcon();"></span></button></label>  
+                <div class="col-md-4">
+                <input id="password" name="password" type="password" class="form-control input-md" value="<%= user.password %>">
+                </div>
+            </div>
+
+            <br><br>
+
+            <div class="form-group">
+                <label class="col-md-4 control-label" for="email">Email</label>  
+                <div class="col-md-4">
+                <input id="email" name="email" type="email" class="form-control input-md" value="<%= user.email %>">
+                </div>
+            </div>
+
+            <br><br>
+
+            <div class="form-group">
+                <label class="col-md-4 control-label">Institute</label>
+                <div class="col-md-4">
+                <input type="text" class="form-control input-md" value="<%= user.institute %>" disabled>
+                </div>
+            </div>
+
+            <br><br>
+
+        </div>
+
+        <div class="details-container">
+
+            <h3 style="text-align: center;">Interests and Permissions</h3>
+
+            <div style="float: left; width: 50%;">
+
+                <b>Interests</b> <br>
+
+                <ol id="interests">
+
+                    <% for (let i = 0; i < user.interests.length; ++i) { %>
+                        <li> <span id="club<%=i%>" name="club<%=i%>"><%= user.interests[i] %></span> &emsp;
+                        
+                            <button type="button" onClick="clubSettings('<%=i%>')"> 
+                                <span id="icon<%=i%>" class="glyphicon glyphicon-trash"></span>
+                            </button>    
+
+                        </li>
+                    <% } %>
+
+                </ol>
+
+                <select id="select_club" name="select_club">
+
+                    <option value="none" selected disabled hidden>Add Club</option>
+
+                    <% for (let i = 0; i < data.length; ++i) { %>
+
+                        <% if (!(user.interests.includes(data[i]))) { %> 
+                            <option value="<%= data[i] %>"><%= data[i] %></option>
+                    <% } } %>
+
+                </select>
+
+                <input type="hidden" name="clubs" id="clubs" value="  ">
+
+            </div>
+
+            <div style="float: left; width: 50%;">
+            
+                <b>Permissions</b> <br>
+
+                <ol>
+
+                    <% for (let i = 0; i < user.permissions.length; ++i) { %>
+                        <li><%= user.permissions[i] %></li>
+                    <% } %>
+
+                </ol>
+
+                <% if (user.permissions.length == 0) { %>
+                    None
+                <% } %>
+
+            </div>
+
+            <div style="clear: both;">
+
+                <br>
+            
+                <% if (user.remind) { %>
+                    <input type="checkbox" name="remind" id="remind" value="true" checked>
+
+                <% } else { %>
+                    <input type="checkbox" name="remind" id="remind" value="true">
+
+                <% } %>
+
+                <label for="remind">Receive reminder email one hour before event is scheduled</label>
+
+            </div>
+
+        </div>
+
+        <center><button type="submit" class="btn btn-primary">Confirm Changes</button></center> <br><br>
+
+    </fieldset>
+</form>
+
+<script>
+
+var interests = <%- JSON.stringify(user.interests) %>;
+var select_list = document.getElementById("select_club");
+var club_list = document.getElementById("clubs");
+
+for (let i = 0; i < interests.length; ++i)
+{
+    var curr_val = club_list.getAttribute("value");
+    curr_val = curr_val + interests[i] + "  ";
+    club_list.setAttribute("value", curr_val);
+}
+
+select_list.addEventListener("change", function()
+{
+    var curr_val = club_list.getAttribute("value");
+
+    if (!curr_val.includes("  " + select_list.value + "  "))
+    {
+        curr_val = curr_val + select_list.value + "  ";
+        club_list.setAttribute("value", curr_val);
+
+        var id = document.getElementById("interests").getElementsByTagName("li").length;
+
+        document.getElementById("interests").innerHTML += 
+        "<li> <span id='club" + id + "' name='club" + id + "'>" + select_list.value + "</span> &emsp;" +
+            "<button type='button' onClick='clubSettings(" + id + ")'>" +
+                "<span id='icon" + id + "' class='glyphicon glyphicon-trash'></span>" +
+            "</button> </li>";
+    }
+});
+
+function changeIcon()
+{
+    var icon = document.getElementById("password-eye-icon");
+    var password_field = document.getElementById("password");
+
+    if (password_field.type == "password")
+    {
+        password_field.setAttribute("type", "text");
+        icon.setAttribute("class", "glyphicon glyphicon-eye-open");
+    }
+
+    else
+    {
+        password_field.setAttribute("type", "password");
+        icon.setAttribute("class", "glyphicon glyphicon-eye-close");
+    }
+}
+
+function clubSettings(i)
+{
+    i = parseInt(i);
+    var club = document.getElementById("club" + i);
+    var icon = document.getElementById("icon" + i);
+
+    if (icon.getAttribute("class") == "glyphicon glyphicon-trash")
+    {
+        club.style.backgroundColor = "#FF6863";
+        icon.setAttribute("class", "glyphicon glyphicon-plus");
+
+        var curr_val = club_list.getAttribute("value");
+        curr_val = curr_val.replace("  " + club.textContent + "  ", "  ");
+        club_list.setAttribute("value", curr_val);
+    }
+
+    else
+    {
+        club.style.backgroundColor = "white";
+        icon.setAttribute("class", "glyphicon glyphicon-trash");
+
+        var curr_val = club_list.getAttribute("value");
+        curr_val = curr_val + club.textContent + "  ";
+        club_list.setAttribute("value", curr_val);
+    }
+}
+
+</script>
 
 </body>
 

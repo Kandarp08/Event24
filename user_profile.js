@@ -34,10 +34,7 @@ router.get("/profile", function(req, res)
         {
             await client.connect();
 
-            var dbo = client.db("userdata");
-            var user = await dbo.collection("users").findOne({username: req.cookies.user.username});
-
-            dbo = client.db("institute_data");
+            var dbo = client.db("institute_data");
             var institute = await dbo.collection("institutes").findOne({name: institute_name});
                    
             var req_count = 0;
@@ -58,7 +55,62 @@ router.get("/profile", function(req, res)
         {
             await client.close();
 
-            res.render("profile.ejs", {user: user, data: await institute.categories, req_count: req_count});
+            res.render("profile.ejs", {user: req.cookies.user, data: await institute.categories, req_count: req_count});
+        }
+    }
+});
+
+router.post("/profile", function(req, res)
+{
+    if (req.cookies.user == undefined)
+        res.redirect("http://localhost:8080/login");
+
+    else
+    {
+        var interests = req.body.clubs.split("  ");
+        interests.splice(0, 1);
+        interests.splice(interests.length - 1, 1);
+
+        var updated_user =
+        {
+            username: req.cookies.user.username,
+            password: req.body.password,
+            email: req.body.email,
+            interests: interests,
+            permissions: req.cookies.user.permissions,
+        }
+
+        if ("remind" in req.body)
+            updated_user.remind = true;
+
+        else if (!("admin" in req.cookies.user))
+            updated_user.remind = false;
+     
+        if ("admin" in req.cookies.user)
+            updated_user.admin = req.cookies.user.admin;
+
+        else
+            updated_user.institute = req.cookies.user.institute;
+
+        updateUser();
+
+        async function updateUser()
+        {
+            try
+            {
+                await client.connect();
+
+                var dbo = client.db("userdata");
+                await dbo.collection("users").replaceOne({username: updated_user.username}, updated_user);
+            }
+
+            finally
+            {
+                await client.close();
+
+                res.cookie("user", updated_user, {maxAge: 1800000});
+                res.redirect("http://localhost:8080/profile");
+            }
         }
     }
 });
