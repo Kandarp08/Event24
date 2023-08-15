@@ -93,7 +93,7 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="password">Password <button type="button"><span id="password-eye-icon" class="glyphicon glyphicon-eye-close" onClick="changeIcon();"></span></button></label>  
                 <div class="col-md-4">
-                <input id="password" name="password" type="password" class="form-control input-md" value="<%= user.password %>">
+                <input id="password" name="password" type="password" class="form-control input-md" value="<%= user.password %>" required>
                 </div>
             </div>
 
@@ -102,7 +102,7 @@
             <div class="form-group">
                 <label class="col-md-4 control-label" for="email">Email</label>  
                 <div class="col-md-4">
-                <input id="email" name="email" type="email" class="form-control input-md" value="<%= user.email %>">
+                <input id="email" name="email" type="email" class="form-control input-md" value="<%= user.email %>" required>
                 </div>
             </div>
 

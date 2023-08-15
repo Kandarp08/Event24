@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users</title>
+    
+    <link rel = "stylesheet" href = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">    
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src = "https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>    
+
+    <style>
+
+        th, td
+        {
+            text-align: center;
+        }
+
+        .permissions-column
+        {
+            width: 50%;
+            float: left;
+            text-align: left;
+        }
+
+    </style>
+
+</head>
+
+<body>
+    
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar">
+                <span class="icon-bar"></span>                        
+            </button>
+            
+            <a class="navbar-brand" href="#">Event24</a>
+        
+        </div>
+            
+        <div class="collapse navbar-collapse" id="navbar">
+        
+        <ul class="nav navbar-nav">
+                        
+            <li><a href="http://localhost:8080/events">Events</a></li>
+            <li><a href="#">My Events</a></li>
+            <li><a href="http://localhost:8080/requests" class="active">Requests
+                <span class="label label-danger" id="req_count"><%= req_count %></span></a>
+            </li>
+            <li><a href="http://localhost:8080/manageusers">Manage Users</a></li>
+    
+            </ul>
+    
+        <ul class="nav navbar-nav navbar-right">
+        
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <%= user.username %>
+                    <span class="caret"></span>
+                </a>
+                            
+                <ul class="dropdown-menu">
+                    <li><a href="http://localhost:8080/profile">Profile</a></li>
+                    <li><a href="http://localhost:8080/logout">Logout</a></li>
+                </ul>
+        
+            </li>
+        </ul>
+        </div>
+    </div>
+</nav>
+
+<% if (users.length > 0) { %>
+
+<form action="http://localhost:8080/manageusers" method="POST">
+
+    <div class="table-responsive" style="margin: 10px;">
+        <table class="table table-hover table-bordered">
+            <thead>
+                <tr>
+    
+                <th>Sr. No.</th>
+                <th>Username</th>
+                <th>Permissions</th>
+    
+                </tr>
+            </thead>
+    
+            <tbody>
+
+                <% for (let i = 0; i < users.length; ++i) { %>
+
+                    <tr>
+
+                        <td><%= i + 1 %></td>
+
+                        <td><%= users[i].username %></td>
+                    
+                        <td>
+                            <% if (users[i].permissions.length > 0) { %>
+                                
+                                <div id="leftColumn<%=i%>" class="permissions-column">
+
+                                    <% for (let j = 0; j < users[i].permissions.length; j += 2) { %>
+                                        <%= j + 1 %>. <span id="club<%=i%> <%=j%>"><%= users[i].permissions[j] %></span> &emsp;
+
+                                        <button type="button" onClick="permissionSettings('<%=i%>', '<%=j%>');">
+                                            <span id="icon<%=i%> <%=j%>" class="glyphicon glyphicon-trash"></span>
+                                        </button>
+
+                                        <br><br>
+                                    <% } %>
+
+                                </div>
+
+                                <div id="rightColumn<%=i%>" class="permissions-column">
+                                    
+                                    <% for (let j = 1; j < users[i].permissions.length; j += 2) { %>
+                                        <%= j + 1 %>. <span id="club<%=i%> <%=j%>"><%= users[i].permissions[j] %></span> &emsp;
+
+                                        <button type="button" onClick="permissionSettings('<%=i%>', '<%=j%>');">
+                                            <span id="icon<%=i%> <%=j%>" class="glyphicon glyphicon-trash"></span>
+                                        </button>
+
+                                        <br><br>
+                                    <% } %>
+        
+                                </div>
+
+                            <% } else { %>
+                                <p>None</p>
+                            <% } %>
+
+                            <div style="clear: both; text-align: left;">
+
+                                <select id="club_list<%=i%>" onChange="addClub('<%=i%>');">
+
+                                    <option value="none" selected disabled hidden>Add</option>
+
+                                    <% for (let i = 0; i < clubs.length; ++i) { %>
+                                        <option><%= clubs[i] %></option>
+                                    <% } %>
+
+                                </select>
+
+                            </div>
+
+                        </td>
+                    
+                    </tr>
+
+                <% } %>
+                
+            </tbody>
+        </table>
+    </div>
+
+    <center><button type="submit" class="btn btn-success">Confirm Changes</button></center>
+
+</form>
+
+<% } else { %>
+    <h3 style="text-align: center;">No users found</h3>
+<% } %>
+
+<script>
+
+function permissionSettings(i, j)
+{
+    var icon = document.getElementById("icon" + i + " " + j);
+    var club = document.getElementById("club" + i + " " + j);
+    var i = parseInt(i);
+    var j = parseInt(j);
+
+    if (icon.getAttribute("class") == "glyphicon glyphicon-trash")
+    {
+        icon.setAttribute("class", "glyphicon glyphicon-plus");
+        club.style.backgroundColor = "#FF6863";
+    }
+
+    else
+    {
+        icon.setAttribute("class", "glyphicon glyphicon-trash");
+        club.style.backgroundColor = "white";
+    }
+}
+
+function addClub(id)
+{
+    var selected_club = document.getElementById("club_list" + id).value;
+
+    var leftColumn = document.getElementById("leftColumn" + id);
+    var rightColumn = document.getElementById("rightColumn" + id);
+
+    var leftClubs = leftColumn.getElementsByTagName("button").length;
+    var rightClubs = rightColumn.getElementsByTagName("button").length;
+
+    var totalPermissions = leftClubs + rightClubs;
+
+    if (totalPermissions % 2 == 0)
+    {
+        leftColumn.innerHTML += (totalPermissions + 1) + ". <span id='club" + id + " " + (leftClubs * 2) + "'>" + selected_club +
+                                "</span> &emsp; <button type='button' onClick='permissionSettings(" + id + "," + (leftClubs * 2) +
+                                ");'> <span id='icon" + id + " " + (leftClubs * 2) + "' class='glyphicon glyphicon-trash'></span></button> <br><br>";
+    }
+
+    else
+    {
+        rightColumn.innerHTML += (totalPermissions + 1) + ". <span id='club" + id + " " + (rightClubs * 2 + 1) + "'>" + selected_club +
+                                "</span> &emsp; <button type='button' onClick='permissionSettings(" + id + "," + (rightClubs * 2 + 1) +
+                                ");'> <span id='icon" + id + " " + (rightClubs * 2 + 1) + "' class='glyphicon glyphicon-trash'></span></button> <br><br>";
+    }
+}
+
+</script>
+
+</body>
+
+</html>
