@@ -65,4 +65,36 @@ router.get("/manageusers", function(req, res)
     }
 });
 
+router.post("/manageusers", function(req, res)
+{
+    updatePermissions();
+
+    async function updatePermissions()
+    {
+        try
+        {
+            await client.connect();
+            
+            var dbo = client.db("userdata");
+
+            for (var key in req.body)
+            {
+                var permissions = req.body[key].split("  ");
+                var username = permissions[0];
+                permissions.splice(0, 1);
+                permissions.splice(permissions.length - 1, 1);
+
+                await dbo.collection("users").updateOne({username: username}, {$set: {permissions: permissions}});
+            }
+        }
+
+        finally
+        {
+            await client.close();
+
+            res.redirect("http://localhost:8080/manageusers");
+        }
+    }
+});
+
 module.exports = router;

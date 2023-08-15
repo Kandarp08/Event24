@@ -96,44 +96,41 @@
 
                     <tr>
 
-                        <td><%= i + 1 %></td>
+                        <td style="width: 20%;"><%= i + 1 %></td>
 
-                        <td><%= users[i].username %></td>
+                        <td style="width: 30%;"><%= users[i].username %></td>
                     
-                        <td>
-                            <% if (users[i].permissions.length > 0) { %>
-                                
-                                <div id="leftColumn<%=i%>" class="permissions-column">
+                        <td style="width: 50%;">
+                            
+                            <input type="hidden" name="permissions<%=i%>" id="permissions<%=i%>" value="<%=users[i].username%>  ">
 
-                                    <% for (let j = 0; j < users[i].permissions.length; j += 2) { %>
-                                        <%= j + 1 %>. <span id="club<%=i%> <%=j%>"><%= users[i].permissions[j] %></span> &emsp;
+                            <div id="leftColumn<%=i%>" class="permissions-column">
 
-                                        <button type="button" onClick="permissionSettings('<%=i%>', '<%=j%>');">
-                                            <span id="icon<%=i%> <%=j%>" class="glyphicon glyphicon-trash"></span>
-                                        </button>
+                                <% for (let j = 0; j < users[i].permissions.length; j += 2) { %>
+                                    <%= j + 1 %>. <span id="club<%=i%> <%=j%>"><%= users[i].permissions[j] %></span> &emsp;
 
-                                        <br><br>
-                                    <% } %>
+                                    <button type="button" onClick="permissionSettings('<%=i%>', '<%=j%>');">
+                                        <span id="icon<%=i%> <%=j%>" class="glyphicon glyphicon-trash"></span>
+                                    </button>
 
-                                </div>
+                                    <br><br>
+                                <% } %>
 
-                                <div id="rightColumn<%=i%>" class="permissions-column">
+                            </div>
+
+                            <div id="rightColumn<%=i%>" class="permissions-column">
                                     
-                                    <% for (let j = 1; j < users[i].permissions.length; j += 2) { %>
-                                        <%= j + 1 %>. <span id="club<%=i%> <%=j%>"><%= users[i].permissions[j] %></span> &emsp;
+                                <% for (let j = 1; j < users[i].permissions.length; j += 2) { %>
+                                    <%= j + 1 %>. <span id="club<%=i%> <%=j%>"><%= users[i].permissions[j] %></span> &emsp;
 
-                                        <button type="button" onClick="permissionSettings('<%=i%>', '<%=j%>');">
-                                            <span id="icon<%=i%> <%=j%>" class="glyphicon glyphicon-trash"></span>
-                                        </button>
+                                    <button type="button" onClick="permissionSettings('<%=i%>', '<%=j%>');">
+                                        <span id="icon<%=i%> <%=j%>" class="glyphicon glyphicon-trash"></span>
+                                    </button>
 
-                                        <br><br>
-                                    <% } %>
+                                    <br><br>
+                                <% } %>
         
-                                </div>
-
-                            <% } else { %>
-                                <p>None</p>
-                            <% } %>
+                            </div>
 
                             <div style="clear: both; text-align: left;">
 
@@ -169,10 +166,19 @@
 
 <script>
 
+var users = <%- JSON.stringify(users) %>;
+
+for (let i = 0; i < users.length; ++i)
+{
+        for (let j = 0; j < users[i].permissions.length; ++j)
+            document.getElementById("permissions" + i).value += users[i].permissions[j] + "  ";
+}
+
 function permissionSettings(i, j)
 {
     var icon = document.getElementById("icon" + i + " " + j);
     var club = document.getElementById("club" + i + " " + j);
+    var permissions = document.getElementById("permissions" + i);
     var i = parseInt(i);
     var j = parseInt(j);
 
@@ -180,18 +186,27 @@ function permissionSettings(i, j)
     {
         icon.setAttribute("class", "glyphicon glyphicon-plus");
         club.style.backgroundColor = "#FF6863";
+
+        var curr_val = permissions.getAttribute("value");
+        curr_val = curr_val.replace("  " + club.textContent + "  ", "  ");
+        permissions.setAttribute("value", curr_val);
     }
 
     else
     {
         icon.setAttribute("class", "glyphicon glyphicon-trash");
-        club.style.backgroundColor = "white";
+        club.style.backgroundColor = "inherit";
+
+        var curr_val = permissions.getAttribute("value");
+        curr_val += club.textContent + "  ";
+        permissions.setAttribute("value", curr_val);
     }
 }
 
 function addClub(id)
 {
     var selected_club = document.getElementById("club_list" + id).value;
+    var permissions = document.getElementById("permissions" + id);
 
     var leftColumn = document.getElementById("leftColumn" + id);
     var rightColumn = document.getElementById("rightColumn" + id);
@@ -201,19 +216,22 @@ function addClub(id)
 
     var totalPermissions = leftClubs + rightClubs;
 
-    if (totalPermissions % 2 == 0)
+    if (totalPermissions % 2 == 0 && !permissions.value.includes(selected_club))
     {
         leftColumn.innerHTML += (totalPermissions + 1) + ". <span id='club" + id + " " + (leftClubs * 2) + "'>" + selected_club +
                                 "</span> &emsp; <button type='button' onClick='permissionSettings(" + id + "," + (leftClubs * 2) +
                                 ");'> <span id='icon" + id + " " + (leftClubs * 2) + "' class='glyphicon glyphicon-trash'></span></button> <br><br>";
     }
 
-    else
+    else if (!permissions.value.includes(selected_club))
     {
         rightColumn.innerHTML += (totalPermissions + 1) + ". <span id='club" + id + " " + (rightClubs * 2 + 1) + "'>" + selected_club +
                                 "</span> &emsp; <button type='button' onClick='permissionSettings(" + id + "," + (rightClubs * 2 + 1) +
                                 ");'> <span id='icon" + id + " " + (rightClubs * 2 + 1) + "' class='glyphicon glyphicon-trash'></span></button> <br><br>";
     }
+
+    if (!permissions.value.includes(selected_club))
+        permissions.setAttribute("value", permissions.value + selected_club + "  ");
 }
 
 </script>
