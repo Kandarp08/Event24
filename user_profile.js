@@ -78,6 +78,8 @@ router.post("/profile", function(req, res)
             email: req.body.email,
             interests: interests,
             permissions: req.cookies.user.permissions,
+            myevents_id: req.cookies.user.myevents_id,
+            myevents: req.cookies.user.myevents,
         }
 
         if ("remind" in req.body)

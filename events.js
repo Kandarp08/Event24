@@ -186,242 +186,270 @@ router.get("/events", function(req, res)
 
 router.post("/newevent", function(req, res)
 {
-    var new_event;
-
-    new_event =
-    {
-        name: req.body.name,
-        club: req.body.club,
-        venue: req.body.venue,
-        time: req.body.time,
-        description: req.body.description,
-        accepted: false,
-        permissions: [{username: req.cookies.user.username, email: req.cookies.user.email, type: "organise_request"}]
-    };
-
-    if (!("admin" in req.cookies.user) && req.cookies.user.permissions.includes(new_event.club))
-    {
-        new_event.accepted = true;
-        new_event.permissions = [];
-
-        addEvent(req.cookies.user.institute, new_event, true);
-    }
-
-    else if ("admin" in req.cookies.user)
-    {
-        new_event.accepted = true;
-        new_event.permissions = [];
-
-        addEvent(req.cookies.user.admin, new_event, true);
-    }
+    if (req.cookies.user == undefined)
+        res.redirect("http://localhost:8080/login");
 
     else
-        addEvent(req.cookies.user.institute, new_event, false);
-
-    async function addEvent(institute_name, new_event, mail_flag)
     {
-        var institute;
-
-        try
+        var new_event =
         {
-            await client.connect();
+            name: req.body.name,
+            club: req.body.club,
+            venue: req.body.venue,
+            time: req.body.time,
+            description: req.body.description,
+            accepted: false,
+            permissions: [{username: req.cookies.user.username, email: req.cookies.user.email, type: "organise_request"}]
+        };
 
-            var dbo = client.db("institute_data");
-            institute = await dbo.collection("institutes").findOne({name: institute_name});
+        if (!("admin" in req.cookies.user) && req.cookies.user.permissions.includes(new_event.club))
+        {
+            new_event.accepted = true;
+            new_event.permissions = [];
+
+            addEvent(req.cookies.user.institute, new_event, true);
         }
 
-        finally
+        else if ("admin" in req.cookies.user)
         {
-            var newevent_id = await institute.events_id;
-            new_event.id = await newevent_id;
+            new_event.accepted = true;
+            new_event.permissions = [];
 
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: {$each: [new_event], $sort: {time: 1}}}});
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$inc: {events_id: 1}});
+            addEvent(req.cookies.user.admin, new_event, true);
+        }
 
-            await client.close();
+        else
+            addEvent(req.cookies.user.institute, new_event, false);
 
-            scheduleRemoval(await institute_name, new_event);
+        async function addEvent(institute_name, new_event, mail_flag)
+        {
+            var institute;
 
-            if (mail_flag)
-                await mailInterestedUsers(institute_name, new_event, new_event.name, new_event.description);
-            
-            res.redirect("http://localhost:8080/events");
+            try
+            {
+                await client.connect();
+
+                var dbo = client.db("institute_data");
+                institute = await dbo.collection("institutes").findOne({name: institute_name});
+            }
+
+            finally
+            {
+                var newevent_id = await institute.events_id;
+                new_event.id = await newevent_id;
+
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: {$each: [new_event], $sort: {time: 1}}}});
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$inc: {events_id: 1}});
+
+                await client.close();
+
+                scheduleRemoval(await institute_name, new_event);
+
+                if (mail_flag)
+                    await mailInterestedUsers(institute_name, new_event, new_event.name, new_event.description);
+                
+                res.redirect("http://localhost:8080/events");
+            }
         }
     }
 });
 
 router.post("/cancel", function(req, res)
 {
-    var event_id = parseInt(req.body.id);
-
-    if ("admin" in req.cookies.user)
-        removeEvent(req.cookies.user.admin).catch(console.dir);
+    if (req.cookies.user == undefined)
+        res.redirect("http://localhost:8080/login");
 
     else
-        removeEvent(req.cookies.user.institute).catch(console.dir);
-
-    async function removeEvent(institute_name)
     {
-        try
+        var event_id = parseInt(req.body.id);
+
+        if ("admin" in req.cookies.user)
+            removeEvent(req.cookies.user.admin).catch(console.dir);
+
+        else
+            removeEvent(req.cookies.user.institute).catch(console.dir);
+
+        async function removeEvent(institute_name)
         {
-            await client.connect();
+            try
+            {
+                await client.connect();
 
-            var dbo = client.db("institute_data");
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: event_id}}});
-        }
+                var dbo = client.db("institute_data");
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: event_id}}});
+            }
 
-        finally
-        {
-            await client.close();
+            finally
+            {
+                await client.close();
 
-            var mailText = "The event " + req.body.name + ", organised by " + req.body.club + ", has been cancelled.\n\nThank you";
-            await mailInterestedUsers(institute_name, req.body, "Cancelled : " + req.body.name, mailText);
+                var mailText = "The event " + req.body.name + ", organised by " + req.body.club + ", has been cancelled.\n\nThank you";
+                await mailInterestedUsers(institute_name, req.body, "Cancelled : " + req.body.name, mailText);
 
-            res.redirect("http://localhost:8080/events");
+                res.redirect("http://localhost:8080/events");
+            }
         }
     }
 });
 
 router.post("/cancelrequest", function(req, res)
 {
-    var event_id = parseInt(req.body.id);
-    var institute_name = req.cookies.user.institute;
+    if (req.cookies.user == undefined)
+        res.redirect("http://localhost:8080/login");
 
-    var cancel_request = {username: req.cookies.user.username, email: req.cookies.user.email, type: "cancel_request"};
-
-    addCancelRequest().catch(console.dir);
-
-    async function addCancelRequest()
+    else
     {
-        var institute;
+        var event_id = parseInt(req.body.id);
+        var institute_name = req.cookies.user.institute;
 
-        try
+        var cancel_request = {username: req.cookies.user.username, email: req.cookies.user.email, type: "cancel_request"};
+
+        addCancelRequest().catch(console.dir);
+
+        async function addCancelRequest()
         {
-            await client.connect();
+            var institute;
 
-            var dbo = client.db("institute_data");
-            var institute = await dbo.collection("institutes").findOne({name: institute_name});
-        }
-
-        finally
-        {
-            var events = await institute.events;
-
-            for await (var event of events)
+            try
             {
-                if (event.id == event_id)
-                {
-                    event.permissions.push(cancel_request);
-                    break;
-                }
+                await client.connect();
+
+                var dbo = client.db("institute_data");
+                var institute = await dbo.collection("institutes").findOne({name: institute_name});
             }
 
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$set: {events: events}});
+            finally
+            {
+                var events = await institute.events;
 
-            await client.close();
+                for await (var event of events)
+                {
+                    if (event.id == event_id)
+                    {
+                        event.permissions.push(cancel_request);
+                        break;
+                    }
+                }
 
-            res.redirect("http://localhost:8080/events");
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$set: {events: events}});
+
+                await client.close();
+
+                res.redirect("http://localhost:8080/events");
+            }
         }
     }
 });
 
 router.post("/edit", function(req, res)
 {   
-    var updated_event = req.body;
-    var old_id = parseInt(updated_event.id);
-
-    if ("admin" in req.cookies.user)
-        editEvent(req.cookies.user.admin);
+    if (req.cookies.user == undefined)
+        res.redirect("http://localhost:8080/login");
 
     else
-        editEvent(req.cookies.user.institute);
-
-    async function editEvent(institute_name)
     {
-        var institute;
+        var updated_event = req.body;
+        var old_id = parseInt(updated_event.id);
 
-        try
+        if ("admin" in req.cookies.user)
+            editEvent(req.cookies.user.admin);
+
+        else
+            editEvent(req.cookies.user.institute);
+
+        async function editEvent(institute_name)
         {
-            await client.connect();
+            var institute;
 
-            var dbo = client.db("institute_data");
-            institute = await dbo.collection("institutes").findOne({name: institute_name});
-
-            var events = await institute.events;
-        
-            for (let i = 0; i < await events.length; ++i)
+            try
             {
-                if (events[i].id == updated_event.id)
+                await client.connect();
+
+                var dbo = client.db("institute_data");
+                institute = await dbo.collection("institutes").findOne({name: institute_name});
+
+                var events = await institute.events;
+            
+                for (let i = 0; i < await events.length; ++i)
                 {
-                    events[i].id = institute.events_id;
-                    events[i].name = updated_event.name;
-                    events[i].club = updated_event.club;
-                    events[i].venue = updated_event.venue;
-                    events[i].time = updated_event.time;
-                    events[i].description = updated_event.description;
+                    if (events[i].id == updated_event.id)
+                    {
+                        events[i].id = institute.events_id;
+                        events[i].name = updated_event.name;
+                        events[i].club = updated_event.club;
+                        events[i].venue = updated_event.venue;
+                        events[i].time = updated_event.time;
+                        events[i].description = updated_event.description;
 
-                    updated_event = events[i];                    
-                    scheduleRemoval(await institute.name, updated_event);
+                        updated_event = events[i];                    
+                        scheduleRemoval(await institute.name, updated_event);
 
-                    break;
+                        break;
+                    }
                 }
+                
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: old_id}}});
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: {$each: [updated_event], $sort: {time: 1}}}});
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$inc: {events_id: 1}});
             }
-            
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$pull: {events: {id: old_id}}});
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$push: {events: {$each: [updated_event], $sort: {time: 1}}}});
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$inc: {events_id: 1}});
-        }
 
-        finally
-        {
-            await client.close();
-            
-            await mailInterestedUsers(institute_name, updated_event, "Updated : " + updated_event.name, updated_event.description);
+            finally
+            {
+                await client.close();
+                
+                await mailInterestedUsers(institute_name, updated_event, "Updated : " + updated_event.name, updated_event.description);
 
-            res.redirect("http://localhost:8080/events");
+                res.redirect("http://localhost:8080/events");
+            }
         }
     }
 });
 
 router.post("/editrequest", function(req, res)
 {
-    var event_id = parseInt(req.body.id);
-    var institute_name = req.cookies.user.institute;
+    if (req.cookies.user == undefined)
+        res.redirect("http://localhost:8080/login");
 
-    var edit_request = {username: req.cookies.user.username, email: req.cookies.user.email, type: "edit_request"};
-
-    addEditRequest().catch(console.dir);
-
-    async function addEditRequest()
+    else
     {
-        var institute;
+        var event_id = parseInt(req.body.id);
+        var institute_name = req.cookies.user.institute;
 
-        try
+        var edit_request = {username: req.cookies.user.username, email: req.cookies.user.email, type: "edit_request"};
+
+        addEditRequest().catch(console.dir);
+
+        async function addEditRequest()
         {
-            await client.connect();
+            var institute;
 
-            var dbo = client.db("institute_data");
-            var institute = await dbo.collection("institutes").findOne({name: institute_name});
-        }
-
-        finally
-        {
-            var events = await institute.events;
-
-            for await (var event of events)
+            try
             {
-                if (event.id == event_id)
-                {
-                    event.permissions.push(edit_request);
-                    break;
-                }
+                await client.connect();
+
+                var dbo = client.db("institute_data");
+                var institute = await dbo.collection("institutes").findOne({name: institute_name});
             }
 
-            await dbo.collection("institutes").updateOne({name: institute_name}, {$set: {events: events}});
+            finally
+            {
+                var events = await institute.events;
 
-            await client.close();
+                for await (var event of events)
+                {
+                    if (event.id == event_id)
+                    {
+                        event.permissions.push(edit_request);
+                        break;
+                    }
+                }
 
-            res.redirect("http://localhost:8080/events");
+                await dbo.collection("institutes").updateOne({name: institute_name}, {$set: {events: events}});
+
+                await client.close();
+
+                res.redirect("http://localhost:8080/events");
+            }
         }
     }
 });

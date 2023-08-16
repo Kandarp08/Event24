@@ -86,6 +86,8 @@ router.post("/register", function(req, res)
                 institute: req.body.institute,
                 interests: [],
                 permissions: [],
+                myevents_id: 1,
+                myevents: [],
             }
 
             if (req.body.remind == "true")

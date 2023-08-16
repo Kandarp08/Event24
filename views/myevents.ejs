@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Events</title>
+    <title>My Events</title>
 
     <link rel = "stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">    
     <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
@@ -12,7 +12,7 @@
 
     <style>
 
-        .event
+        .myevent
         {
             box-sizing: border-box;
 
@@ -27,7 +27,7 @@
             overflow: auto;
         }
 
-        .event:hover
+        .myevent:hover
         {
             cursor: pointer;
             outline: 2px solid gray;
@@ -39,7 +39,7 @@
 </head>
 
 <body>
-
+    
 <nav class="navbar navbar-inverse">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -62,7 +62,7 @@
                 <% if (user.admin != undefined) { %>
 
                 <li><a href="http://localhost:8080/requests">Requests
-                    <span class="label label-danger" id="req_count"></span></a>
+                    <span class="label label-danger"><%= req_count %></span></a>
                 </li>
 
                 <li><a href="http://localhost:8080/manageusers">Manage Users</a></li>
@@ -90,30 +90,25 @@
     </div>
 </nav>
 
-<% for (let i = 0; i < events.length; ++i) { %>
+<% for (let i = 0; i < myevents.length; ++i) { %>
 
-    <% if (events[i].accepted === false) { %>
-        <% continue; %>
-    <% } %>    
-
-    <div class="event" data-toggle="modal" data-target="#eventInfo<%=i%>">
+    <div class="myevent" data-toggle="modal" data-target="#myeventInfo<%=i%>">
 
         <div style="width: 100%; height: 30%; border-bottom: 3px solid black; box-sizing: border-box; padding-top: 5px; margin-bottom: 5px;">
         
-            <p style="text-align: center; font-size: 20px;"><%= events[i].name %></p>
+            <p style="text-align: center; font-size: 20px;"><%= myevents[i].name %></p>
 
         </div>
 
         <div style="margin: 5px;">
-            <p>Organised by: <%= events[i].club %></p>
-            <p>Venue: <%= events[i].venue %></p>
-            <p id="eventDate<%=i%>">Date: </p> 
-            <p id="eventTime<%=i%>">Time: </p>
+            <p>Venue: <%= myevents[i].venue %></p>
+            <p id="myeventDate<%=i%>">Date: </p> 
+            <p id="myeventTime<%=i%>">Time: </p>
         </div>
 
     </div>
     
-    <div class="modal fade" id="eventInfo<%=i%>">
+    <div class="modal fade" id="myeventInfo<%=i%>">
         <div class="modal-dialog">
             
             <div class="modal-content">
@@ -127,44 +122,37 @@
                     <form id="form<%=i%>" class="form-horizontal" method="POST" onsubmit="disable('<%=i%>')">
                         <fieldset>
 
-                        <input type="hidden" name="id" value="<%= events[i].id %>">
+                        <input type="hidden" name="id" value="<%= myevents[i].id %>">
                                         
                         <div class="form-group">
                             <label class="col-md-4 control-label">Event Name</label>  
                             <div class="col-md-4">
-                            <input type="text" class="form-control input-md" id="name<%=i%>" name="name" value="<%= events[i].name %>" disabled>
+                            <input type="text" class="form-control input-md" id="name<%=i%>" name="name" value="<%= myevents[i].name %>">
                             </div>
                         </div>
-
-                        <div class="form-group">
-                            <label class="col-md-4 control-label">Organising Club</label>  
-                            <div class="col-md-4">
-                            <input type="text" class="form-control input-md" id="club<%=i%>" name="club" value="<%= events[i].club %>" disabled>
-                            </div>
-                        </div>
-    
+   
                         <div class="form-group">
                             <label class="col-md-4 control-label">Event Venue</label>  
                             <div class="col-md-4">
-                            <input type="text" class="form-control input-md" id="venue<%=i%>" name="venue" value="<%= events[i].venue %>" disabled>
+                            <input type="text" class="form-control input-md" id="venue<%=i%>" name="venue" value="<%= myevents[i].venue %>">
                             </div>
                         </div>
     
                         <div class="form-group">
                             <label class="col-md-4 control-label">Event Time</label>  
                             <div class="col-md-4">
-                            <input type="datetime-local" class="form-control input-md" id="time<%=i%>" name="time" value="<%= events[i].time %>" disabled>
+                            <input type="datetime-local" class="form-control input-md" id="time<%=i%>" name="time" value="<%= myevents[i].time %>">
                             </div>
                         </div>
     
                         <div class="form-group" style="width: 50%; margin: auto;">
                             <label for="description">Event Description</label>
-                            <textarea class="form-control" rows="5" id="description<%=i%>" name="description" readonly><%= events[i].description %></textarea>
+                            <textarea class="form-control" rows="5" id="description<%=i%>" name="description"><%= myevents[i].description %></textarea>
                         </div>
 
                         <br>
-                        <button type="submit" id="cancel<%=i%>" formaction="http://localhost:8080/cancelrequest" class="btn btn-danger" style="float: right; margin-left: 10px;">Request Cancellation</button>
-                        <button type="submit" id="edit<%=i%>" formaction="http://localhost:8080/editrequest" class="btn btn-success" style="float: right;">Request Edit</button>
+                        <button type="submit" id="cancel<%=i%>" formaction="http://localhost:8080/cancel_myevent" class="btn btn-danger" style="float: right; margin-left: 10px;">Cancel Event</button>
+                        <button type="submit" id="edit<%=i%>" formaction="http://localhost:8080/edit_myevent" class="btn btn-success" style="float: right;">Edit Event</button>
 
                         </fieldset>
                     </form>    
@@ -179,7 +167,7 @@
 
 <% } %>
 
-<div class="event" data-toggle="modal" data-target="#newEvent">
+<div class="myevent" data-toggle="modal" data-target="#newMyevent">
 
     <center>
     <span class="glyphicon glyphicon-plus" style="margin: 85px auto; font-size: 50px;"></span>
@@ -187,7 +175,7 @@
     
 </div>
     
-<div class="modal fade" id="newEvent">
+<div class="modal fade" id="newMyevent">
     <div class="modal-dialog">
         
         <div class="modal-content">
@@ -198,7 +186,7 @@
 
             <div class="modal-body">
                 
-                <form class="form-horizontal" action="http://localhost:8080/newevent" method="POST" onsubmit="document.getElementById('arrange').disabled = true;">
+                <form class="form-horizontal" action="http://localhost:8080/new_myevent" method="POST" onsubmit="document.getElementById('arrange').disabled = true;">
                     <fieldset>
                                     
                     <div class="form-group">
@@ -207,21 +195,6 @@
                         <input id="name" name="name" type="text" class="form-control input-md" required>
                         </div>
                     </div>
-
-                    <center>Select organising club : 
-
-                    <select name="club" id="club" onfocus="this.size=5;" onblur="this.size=1;" onchange="this.size=1; this.blur(); arrangeEventButton();">
-
-                        <% data.forEach(club => { %>
-
-                            <option value="<%=club%>"><%= club %></option>
-
-                        <% }); %>
-
-                    </select>
-                    </center>
-
-                    <br>
 
                     <div class="form-group">
                         <label class="col-md-4 control-label">Event Venue</label>  
@@ -244,7 +217,7 @@
 
                     <br>
 
-                    <button type="submit" class="btn btn-success" id="arrange" style="float:right">Request Permission</button>
+                    <button type="submit" class="btn btn-success" id="arrange" style="float:right">Arrange Event</button>
                     </fieldset>
 
                 </form>
@@ -260,101 +233,19 @@
 
 <script>
 
-var user = <%-JSON.stringify(user)%>;
-var events = <%-JSON.stringify(events)%>;
-
-setPermissions();
-arrangeEventButton();
-setMinTime();
-
-if ("admin" in user)
-    countRequests();
-
+var myevents = <%- JSON.stringify(myevents) %>;
 var months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-for (let i = 0; i < events.length; ++i)
+for (let i = 0; i < myevents.length; ++i)
 {
-    if (events[i].accepted == false)
-        continue;
-
-    var datetime = events[i].time;
+    var datetime = myevents[i].time;
     var date = new Date(datetime);
 
-    document.getElementById("eventDate" + i).innerHTML += date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
-    document.getElementById("eventTime" + i).innerHTML += date.getHours() + ":" + date.getMinutes();
+    document.getElementById("myeventDate" + i).innerHTML += date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
+    document.getElementById("myeventTime" + i).innerHTML += date.getHours() + ":" + date.getMinutes();
 }
 
-function arrangeEventButton()
-{
-    var club = document.getElementById("club").value;
-
-    if (("admin" in user) || user.permissions.includes(club))
-        document.getElementById("arrange").innerHTML = "Arrange Event";
-
-    else
-        document.getElementById("arrange").innerHTML = "Request Permission";
-}
-
-function hasPermission(user, event, special_permission)
-{
-    if (user.permissions.includes(event.club))
-        return true;
-
-    if (event.permissions.some(el => el.username == user.username && el.email == user.email && el.type == "organise"))
-        return true;
-
-    else if (special_permission == "edit" && event.permissions.some(el => el.username == user.username && el.email == user.email && el.type == "edit"))
-        return true;
-
-    else if (special_permission == "cancel" && event.permissions.some(el => el.username == user.username && el.email == user.email && el.type == "cancel"))
-        return true;
-
-    return false;
-}
-
-function setPermissions()
-{
-    for (let i = 0; i < events.length; ++i)
-    {
-        if (events[i].accepted == false)
-            continue;
-
-        if (("admin" in user) || hasPermission(user, events[i], "edit"))
-        {
-            document.getElementById("edit" + i).innerHTML = "Edit Event";
-            document.getElementById("edit" + i).setAttribute("formaction", "http://localhost:8080/edit");
-
-            document.getElementById("name" + i).disabled = false;
-            document.getElementById("club" + i).disabled = false;
-            document.getElementById("venue" + i).disabled = false;
-            document.getElementById("time" + i).disabled = false;
-            document.getElementById("description" + i).readOnly = false;
-        }
-
-        if (("admin" in user) || hasPermission(user, events[i], "cancel"))
-        {
-            document.getElementById("cancel" + i).innerHTML = "Cancel Event";
-            document.getElementById("cancel" + i).setAttribute("formaction", "http://localhost:8080/cancel");
-        }
-    }
-}
-
-function countRequests()
-{
-    var req_count = 0;
-
-    for (let i = 0; i < events.length; ++i)
-    {
-        for (let j = 0; j < events[i].permissions.length; ++j)
-        {
-            if (events[i].permissions[j].type == "organise_request" || events[i].permissions[j].type == "edit_request" ||
-                events[i].permissions[j].type == "cancel_request")
-                ++req_count;
-        }
-    }
-
-    document.getElementById("req_count").textContent = req_count.toString();
-}
+setMinTime();
 
 function disable(i)
 {
@@ -372,15 +263,12 @@ function setMinTime()
 
     document.getElementById("time").setAttribute("min", minTime);
 
-    for (let i = 0; i < events.length; ++i)
-    {
-        if (events[i].accepted == true)
+    for (let i = 0; i < myevents.length; ++i)
             document.getElementById("time" + i).setAttribute("min", minTime);
-    }
 }
 
 </script>
-
+    
 </body>
 
 </html>
