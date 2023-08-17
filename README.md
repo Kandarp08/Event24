@@ -1,22 +1,22 @@
 Event24 is an event management website. It can be used by the various clubs in an institute to organise events.
 The users are informed as well as reminded through email. To setup the website locally, follow these steps :
 
-1. Clone the repository
+1. Clone the repository <br />
    git clone https://github.com/Kandarp08/Event24.git
 
-2. Install the following packages using the command
-   npm install <package_name>
+2. Install the following packages using the command <br />
+   npm install <package_name> <br /><br />
 
-   i. express
-   ii. ejs
-   iii. dotenv
-   iv. mongodb
-   v. cookie-parser
-   vi. express-session
-   vii. body-parser
-   viii. multer
-   ix. nodemailer
-   x. node-cron
+   i. express <br />
+   ii. ejs <br />
+   iii. dotenv <br />
+   iv. mongodb <br />
+   v. cookie-parser <br />
+   vi. express-session <br />
+   vii. body-parser <br />
+   viii. multer <br />
+   ix. nodemailer <br />
+   x. node-cron <br />
 
 3. Create the .env file. See .env.example to know more.
 
@@ -25,11 +25,11 @@ The users are informed as well as reminded through email. To setup the website l
 5. Create a database "institute_data" and inside it a collection "institutes". Add a document to the collection 
    "institutes" with the following attributes :
 
-   {
-        name: <institute name>
-        categories: <string array containing names of all the clubs>
-        events_id: 1 (Int32)
-        events: <empty array>
+   { <br />
+        name: <institute name> <br />
+        categories: <string array containing names of all the clubs> <br />
+        events_id: 1 (Int32) <br />
+        events: <empty array> <br />
    }
 
    This completes the addition of the institute to the database.
@@ -38,15 +38,15 @@ The users are informed as well as reminded through email. To setup the website l
    with the following attributes :
 
    {
-        username: <admin username>
-        password: <admin password>
-        email: <admin email>
-        admin: <institute name>
-        myevents_id: 1 (Int32)
-        myevents: <empty array>
+        username: <admin username> <br />
+        password: <admin password> <br />
+        email: <admin email> <br />
+        admin: <institute name> <br />
+        myevents_id: 1 (Int32) <br />
+        myevents: <empty array> <br />
    }
 
    This completes the registration of the admin. No separate registration is required for the admin.
 
-7. Start the server
+7. Start the server <br />
    node index.js
