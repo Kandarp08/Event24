@@ -26,10 +26,10 @@ The users are informed as well as reminded through email. To setup the website l
    "institutes" with the following attributes :
 
    { <br />
-        name: "<institute name>" <br />
-        categories: "<string array containing names of all the clubs>" <br />
+        name: institute name <br />
+        categories: string array containing names of all the clubs <br />
         events_id: 1 (Int32) <br />
-        events: "<empty array>" <br />
+        events: empty array <br />
    }
 
    This completes the addition of the institute to the database.
@@ -38,12 +38,12 @@ The users are informed as well as reminded through email. To setup the website l
    with the following attributes :
 
    { <br />
-        username: "<admin username>" <br />
-        password: "<admin password>" <br />
-        email: "<admin email>" <br />
-        admin: "<institute name>" <br />
+        username: admin username <br />
+        password: admin password <br />
+        email: admin email <br />
+        admin: institute name <br />
         myevents_id: 1 (Int32) <br />
-        myevents: "<empty array>" <br />
+        myevents: empty array <br />
    }
 
    This completes the registration of the admin. No separate registration is required for the admin.
