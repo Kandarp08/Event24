@@ -5,7 +5,7 @@ The users are informed as well as reminded through email. To setup the website l
    git clone https://github.com/Kandarp08/Event24.git
 
 2. Install the following packages using the command <br />
-   npm install <package_name> <br /><br />
+   npm install <package_name> <br />
 
    i. express <br />
    ii. ejs <br />
@@ -37,7 +37,7 @@ The users are informed as well as reminded through email. To setup the website l
 6. Create another database "userdata" and inside it a collection "users". Add a document for admin of the institute
    with the following attributes :
 
-   {
+   { <br />
         username: <admin username> <br />
         password: <admin password> <br />
         email: <admin email> <br />
