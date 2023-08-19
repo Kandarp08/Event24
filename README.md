@@ -6,8 +6,7 @@ The users are informed as well as reminded through email. To setup the website l
    git clone https://github.com/Kandarp08/Event24.git
 
 2. Install the following packages using the command <br />
-   ```bash
-   npm install <package_name>
+   npm install <package_name> <br />
 
    i. express <br />
    ii. ejs <br />
