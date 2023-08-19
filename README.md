@@ -2,9 +2,11 @@ Event24 is an event management website. It can be used by the various clubs in a
 The users are informed as well as reminded through email. To setup the website locally, follow these steps :
 
 1. Clone the repository <br />
+   ```bash
    git clone https://github.com/Kandarp08/Event24.git
 
 2. Install the following packages using the command <br />
+   ```bash
    npm install <package_name> <br />
 
    i. express <br />
@@ -49,4 +51,5 @@ The users are informed as well as reminded through email. To setup the website l
    This completes the registration of the admin. No separate registration is required for the admin.
 
 7. Start the server <br />
+   ```bash
    node index.js
