@@ -7,7 +7,7 @@ The users are informed as well as reminded through email. To setup the website l
 
 2. Install the following packages using the command <br />
    ```bash
-   npm install <package_name> <br />
+   npm install <package_name>
 
    i. express <br />
    ii. ejs <br />
