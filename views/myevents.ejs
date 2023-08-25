@@ -257,10 +257,9 @@ function setMinTime()
 {
     var date = new Date();
     var minTime = date.getFullYear() + "-" + (date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1)) + 
-                "-" + date.getDate() + "T" + (date.getHours() < 10 ? "0" + date.getHours() : date.getHours()) + 
-                ":" + (date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes()) + ":" +
-                (date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds());
-
+                "-" + date.getDate() + "T" + ((date.getHours() + 1) < 10 ? "0" + (date.getHours() + 1) : (date.getHours() + 1)) + 
+                ":00:00";
+                
     document.getElementById("time").setAttribute("min", minTime);
 
     for (let i = 0; i < myevents.length; ++i)
